@@ -1,0 +1,30 @@
+using Microsoft.AspNetCore.Identity;
+
+namespace SwaOlova.Infrastructure.Data.Identity;
+
+public class ApplicationUser : IdentityUser<Guid>
+{
+    public string FirstName { get; set; } = string.Empty;
+
+    public string LastName { get; set; } = string.Empty;
+
+    public string FullName => $"{FirstName} {LastName}";
+
+    public bool IsActive { get; set; } = true;
+
+    public bool ForcePasswordChange { get; set; }
+
+    public bool IsLocked { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public DateTime? LastLoginDate { get; set; }
+
+    public string? ProfilePhotoUrl { get; set; }
+
+    public Guid? RiderId { get; set; }
+
+    public Guid? MerchantId { get; set; }
+
+    public Guid? CustomerId { get; set; }
+}

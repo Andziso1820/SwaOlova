@@ -1,0 +1,139 @@
+﻿@using SwaOlova.Application.Features.Customers.Queries.GetCustomerById
+@model GetCustomerByIdResponse
+
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>@ViewData["Title"]</h1>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>First Name:</strong></p>
+                        <p>@Model.Customer.FirstName</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Last Name:</strong></p>
+                        <p>@Model.Customer.LastName</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong></p>
+                        <p>@Model.Customer.Email</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Phone:</strong></p>
+                        <p>@Model.Customer.PhoneNumber</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Joined Date:</strong></p>
+                        <p>@Model.Customer.CreatedDate?.ToString("dd MMM yyyy")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Last Updated:</strong></p>
+                        <p>@Model.Customer.UpdatedDate?.ToString("dd MMM yyyy")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Addresses</h5>
+            </div>
+            <div class="card-body">
+                @if (Model?.Customer?.Addresses?.Any() == true)
+                {
+                    @foreach (var address in Model.Customer.Addresses)
+                    {
+                        <div class="address-item mb-2 p-2 border rounded">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p><strong>@address.AddressType</strong></p>
+                                    <p class="text-muted small">@address.StreetAddress, @address.City @address.PostalCode</p>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-warning">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No addresses on file.</p>
+                }
+                <button type="button" class="btn btn-sm btn-info mt-2">
+                    <i class="fa fa-plus"></i> Add Address
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Order Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="text-muted small">Total Orders</p>
+                    <h5>0</h5>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted small">Total Spent</p>
+                    <h5>$0.00</h5>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted small">Average Order Value</p>
+                    <h5>$0.00</h5>
+                </div>
+                <div>
+                    <p class="text-muted small">Last Order</p>
+                    <h5>-</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="@Url.Action("OrderHistory", new { customerId = Model.Customer.Id })" class="btn btn-info btn-block mb-2">
+                    <i class="fa fa-history"></i> Order History
+                </a>
+                <button type="button" class="btn btn-warning btn-block mb-2">
+                    <i class="fa fa-edit"></i> Edit Profile
+                </button>
+                <button type="button" class="btn btn-danger btn-block" onclick="if(confirm('Are you sure?')) { /* Delete customer */ }">
+                    <i class="fa fa-trash"></i> Delete Customer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

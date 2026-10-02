@@ -1,0 +1,16 @@
+using Microsoft.AspNetCore.Identity;
+
+namespace SwaOlova.Infrastructure.Data.Identity;
+
+public class ApplicationRole : IdentityRole<Guid>
+{
+    public string? Description { get; set; }
+
+    public string? PermissionGroup { get; set; }
+
+    public bool IsSystemRole { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public DateTime? ModifiedDate { get; set; }
+}

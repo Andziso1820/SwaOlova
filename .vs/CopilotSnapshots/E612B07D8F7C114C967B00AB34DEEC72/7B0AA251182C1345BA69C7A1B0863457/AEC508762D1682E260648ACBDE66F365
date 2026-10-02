@@ -1,0 +1,6 @@
+﻿namespace SwaOlova.Infrastructure.Service.Common;
+
+public static class DateTimeServiceExtensions
+{
+    public static DateTime LocalNow(this DateTimeService _) => DateTime.Now;
+}

@@ -1,0 +1,97 @@
+﻿@model SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel
+
+@{
+    ViewData["Title"] = "Riders";
+}
+
+<div class="campaign-workspace-page">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h1 class="mb-0">Manage Riders</h1>
+            <p class="text-muted mb-0">View rider status, search the fleet, and open a rider workspace in one click.</p>
+        </div>
+        <a href="#" class="btn btn-primary disabled" aria-disabled="true">Add Rider</a>
+    </div>
+
+    <form method="get" class="row g-2 align-items-center mb-3">
+        <input type="hidden" name="view" value="@Model.ActiveView" />
+        <div class="col-md-6 col-lg-5">
+            <div class="input-group">
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Search by rider name, phone number, or driver license" />
+                <button type="submit" class="btn btn-info"><i class="fa fa-search" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+        {
+            <div class="col-auto">
+                <a asp-action="Index" asp-route-view="@Model.ActiveView" class="btn btn-outline-secondary">Clear Search</a>
+            </div>
+        }
+    </form>
+
+    <ul class="nav nav-pills mb-3 campaign-view-tabs">
+        <li class="nav-item"><a asp-action="Index" asp-route-view="all" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "all" ? "active" : string.Empty)">All Riders</a></li>
+        <li class="nav-item"><a asp-action="Index" asp-route-view="pending" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "pending" ? "active" : string.Empty)">Pending Approval</a></li>
+        <li class="nav-item"><a asp-action="Index" asp-route-view="available" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "available" ? "active" : string.Empty)">Available</a></li>
+        <li class="nav-item"><a asp-action="Index" asp-route-view="busy" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "busy" ? "active" : string.Empty)">Busy</a></li>
+        <li class="nav-item"><a asp-action="Index" asp-route-view="offline" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "offline" ? "active" : string.Empty)">Offline</a></li>
+        <li class="nav-item"><a asp-action="Index" asp-route-view="suspended" asp-route-searchTerm="@Model.SearchTerm" class="nav-link @(Model.ActiveView == "suspended" ? "active" : string.Empty)">Suspended</a></li>
+    </ul>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.TotalCount</div><div class="metric-title">All Riders</div></div></div>
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.DashboardCounts.GetValueOrDefault("pending")</div><div class="metric-title">Pending</div></div></div>
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.DashboardCounts.GetValueOrDefault("available")</div><div class="metric-title">Available</div></div></div>
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.DashboardCounts.GetValueOrDefault("busy")</div><div class="metric-title">Busy</div></div></div>
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.DashboardCounts.GetValueOrDefault("offline")</div><div class="metric-title">Offline</div></div></div>
+        <div class="col-md-4 col-xl-2"><div class="metric-card"><div class="metric-value">@Model.DashboardCounts.GetValueOrDefault("suspended")</div><div class="metric-title">Suspended</div></div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>@Model.Heading</span>
+            <span class="text-muted small">Total: @Model.Riders.Count</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Rider</th>
+                            <th>Rider Number</th>
+                            <th>Phone</th>
+                            <th>Driver License</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Riders.Count == 0)
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-4">No riders match this view.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var rider in Model.Riders)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@rider.FullName</div>
+                                        <div class="text-muted small">Driver workspace</div>
+                                    </td>
+                                    <td>@rider.RiderNumber</td>
+                                    <td>@rider.PhoneNumber</td>
+                                    <td>@rider.DriversLicense</td>
+                                    <td><span class="badge @SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel.BadgeClass(rider.Status)">@rider.Status</span></td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@rider.Id" class="btn btn-sm btn-outline-secondary">Workspace</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

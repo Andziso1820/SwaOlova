@@ -1,0 +1,354 @@
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register - SWA OLOVA";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/css/inspinia-theme.css" asp-append-version="true" />
+    <style>
+        html, body {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .register-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .register-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .register-header .logo-icon {
+            font-size: 32px;
+        }
+
+        .register-header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .register-form {
+            padding: 40px 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto !important;
+            margin-right: 10px;
+            margin-top: 3px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: 500;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .checkbox-group small {
+            display: block;
+            color: #999;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .register-btn:active {
+            transform: translateY(0);
+        }
+
+        .register-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        .register-footer p {
+            margin-bottom: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .register-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .register-footer a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .alert {
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .input-error {
+            border-color: #dc3545 !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .password-requirements {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #333;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .password-requirements ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <h1>
+                    <i class="fa fa-user-plus logo-icon"></i>
+                    Create Account
+                </h1>
+                <p>Join SWA OLOVA Today</p>
+            </div>
+
+            <div class="register-form">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Registration Failed!</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <ul class="mb-0 mt-2">
+                            @foreach (var modelState in ViewData.ModelState.Values)
+                            {
+                                @foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form method="post" asp-action="Register" asp-controller="Account" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="FirstName"></label>
+                            <input asp-for="FirstName"
+                                   class="form-control @(ViewData.ModelState["FirstName"]?.Errors.Any() == true ? "input-error" : "")"
+                                   placeholder="John"
+                                   type="text" />
+                            <span asp-validation-for="FirstName" class="error-message"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="LastName"></label>
+                            <input asp-for="LastName"
+                                   class="form-control @(ViewData.ModelState["LastName"]?.Errors.Any() == true ? "input-error" : "")"
+                                   placeholder="Doe"
+                                   type="text" />
+                            <span asp-validation-for="LastName" class="error-message"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email"
+                               class="form-control @(ViewData.ModelState["Email"]?.Errors.Any() == true ? "input-error" : "")"
+                               placeholder="john.doe@example.com"
+                               type="email" />
+                        <span asp-validation-for="Email" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="PhoneNumber"></label>
+                        <input asp-for="PhoneNumber"
+                               class="form-control"
+                               placeholder="+27 123 456 7890"
+                               type="tel" />
+                        <span asp-validation-for="PhoneNumber" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Password"></label>
+                        <input asp-for="Password"
+                               class="form-control @(ViewData.ModelState["Password"]?.Errors.Any() == true ? "input-error" : "")"
+                               placeholder="Enter a strong password" />
+                        <span asp-validation-for="Password" class="error-message"></span>
+                        <div class="password-requirements">
+                            <strong>Password must contain:</strong>
+                            <ul class="mb-0">
+                                <li>At least 8 characters</li>
+                                <li>One uppercase letter (A-Z)</li>
+                                <li>One lowercase letter (a-z)</li>
+                                <li>One number (0-9)</li>
+                                <li>One special character (&#64;&#36;&#33;&#37;&#42;&#63;&#38;)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword"></label>
+                        <input asp-for="ConfirmPassword"
+                               class="form-control @(ViewData.ModelState["ConfirmPassword"]?.Errors.Any() == true ? "input-error" : "")"
+                               placeholder="Confirm your password" />
+                        <span asp-validation-for="ConfirmPassword" class="error-message"></span>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" asp-for="AgreedToTerms" id="agreedToTerms" />
+                        <label for="agreedToTerms">
+                            I agree to the <a href="#" style="color: #667eea;">Terms of Service</a> and <a href="#" style="color: #667eea;">Privacy Policy</a>
+                            <small>*Required</small>
+                        </label>
+                    </div>
+                    <span asp-validation-for="AgreedToTerms" class="error-message"></span>
+
+                    <button type="submit" class="register-btn">
+                        <i class="fa fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+            </div>
+
+            <div class="register-footer">
+                <p>
+                    Already have an account?
+                    <a asp-action="Login" asp-controller="Account">Sign in here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

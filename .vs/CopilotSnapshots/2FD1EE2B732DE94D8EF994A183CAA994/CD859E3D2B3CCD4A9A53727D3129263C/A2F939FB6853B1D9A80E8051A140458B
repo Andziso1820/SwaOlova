@@ -1,0 +1,47 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using SwaOlova.Portal.Controllers;
+using SwaOlova.Application.Features.Customers.Queries.GetCustomerById;
+using SwaOlova.Application.Features.Customers.Queries.GetCustomersPaged;
+using SwaOlova.Application.Features.Customers.Queries.GetCustomerOrderHistory;
+
+namespace SwaOlova.Portal.Areas.Customers.Controllers
+{
+    [Area("Customers")]
+    public class CustomersController : BaseController
+    {
+        public CustomersController(IMediator mediator) : base(mediator)
+        {
+        }
+
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
+        {
+            var query = new GetCustomersPagedQuery(
+                new GetCustomersPagedRequest(pageNumber, pageSize, null));
+
+            var result = await Mediator.Send(query);
+            return View(result);
+        }
+
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var query = new GetCustomerByIdQuery(id);
+            var result = await Mediator.Send(query);
+
+            if (result == null)
+                return NotFound();
+
+            return View(result);
+        }
+
+        public async Task<IActionResult> OrderHistory(Guid customerId, int pageNumber = 1, int pageSize = 10)
+        {
+            var query = new GetCustomerOrderHistoryQuery(
+                customerId,
+                new GetCustomerOrderHistoryRequest(pageNumber, pageSize));
+
+            var result = await Mediator.Send(query);
+            return View(result);
+        }
+    }
+}

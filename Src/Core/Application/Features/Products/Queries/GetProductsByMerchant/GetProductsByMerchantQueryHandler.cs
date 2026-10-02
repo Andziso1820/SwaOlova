@@ -1,0 +1,32 @@
+using MediatR;
+using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+using SwaOlova.Application.Features.Products.Dtos;
+
+namespace SwaOlova.Application.Features.Products.Queries.GetProductsByMerchant;
+
+public sealed class GetProductsByMerchantQueryHandler(IProductRepository productRepository)
+    : IRequestHandler<GetProductsByMerchantQuery, Result<GetProductsByMerchantResponse>>
+{
+    public async Task<Result<GetProductsByMerchantResponse>> Handle(GetProductsByMerchantQuery request, CancellationToken cancellationToken)
+    {
+        // Note: In a real scenario, the repository should support merchant-based filtering
+        var allProducts = await productRepository.SearchAsync(string.Empty, cancellationToken);
+
+        var merchantProducts = allProducts
+            .Where(p => p.MerchantId == request.MerchantId)
+            .ToList();
+
+        var totalCount = merchantProducts.Count;
+        var skip = (request.PageNumber - 1) * request.PageSize;
+
+        var products = merchantProducts
+            .Skip(skip)
+            .Take(request.PageSize)
+            .Select(ProductDtoMapper.ToDto)
+            .ToArray();
+
+        var response = new GetProductsByMerchantResponse(products, totalCount, request.PageNumber, request.PageSize);
+        return Result<GetProductsByMerchantResponse>.Success(response);
+    }
+}

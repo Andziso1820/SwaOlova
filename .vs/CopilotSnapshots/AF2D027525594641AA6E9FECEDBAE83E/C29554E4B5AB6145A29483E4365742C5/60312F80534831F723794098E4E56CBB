@@ -1,0 +1,65 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using SwaOlova.Portal.Controllers;
+using SwaOlova.Application.Features.Riders.Queries.GetRiderById;
+using SwaOlova.Application.Features.Riders.Queries.SearchRiders;
+using SwaOlova.Application.Features.Riders.Commands.ApproveRider;
+using SwaOlova.Application.Features.Riders.Commands.SuspendRider;
+
+namespace SwaOlova.Portal.Areas.Riders.Controllers
+{
+    [Area("Riders")]
+    public class RidersController : BaseController
+    {
+        public RidersController(IMediator mediator) : base(mediator)
+        {
+        }
+
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
+        {
+            var query = new SearchRidersQuery(new SearchRidersRequest(null, null, pageNumber, pageSize));
+
+            var result = await Mediator.Send(query);
+            return View(result);
+        }
+
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var query = new GetRiderByIdQuery(id);
+            var result = await Mediator.Send(query);
+
+            if (result == null)
+                return NotFound();
+
+            return View(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Approve(Guid id)
+        {
+            var command = new ApproveRiderCommand(id);
+            var result = await Mediator.Send(command);
+
+            if (result.IsSuccess)
+                TempData["Success"] = "Rider approved successfully.";
+            else
+                TempData["Error"] = "Failed to approve rider.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Suspend(Guid id, string reason = "")
+        {
+            var command = new SuspendRiderCommand(id);
+            var result = await Mediator.Send(command);
+
+            if (result.IsSuccess)
+                TempData["Success"] = "Rider suspended successfully.";
+            else
+                TempData["Error"] = "Failed to suspend rider.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+    }
+}

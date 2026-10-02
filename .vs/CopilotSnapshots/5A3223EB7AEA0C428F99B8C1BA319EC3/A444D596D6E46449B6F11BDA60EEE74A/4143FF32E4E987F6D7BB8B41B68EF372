@@ -1,0 +1,90 @@
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using SwaOlova.Domain.Auditing;
+using SwaOlova.Domain.Customer;
+using SwaOlova.Domain.Delivery;
+using SwaOlova.Domain.Identity;
+using SwaOlova.Domain.Locations;
+using SwaOlova.Domain.Merchant;
+using SwaOlova.Domain.Notifications;
+using SwaOlova.Domain.Order;
+using SwaOlova.Domain.Payment;
+using SwaOlova.Domain.Product;
+using SwaOlova.Domain.Promotions;
+using SwaOlova.Domain.Rider;
+using SwaOlova.Domain.Vehicle;
+using SwaOlova.Infrastructure.Data.Identity;
+
+namespace SwaOlova.Infrastructure.Data.Context;
+
+public class SwaOlavaDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+{
+    public SwaOlavaDbContext(DbContextOptions<SwaOlavaDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
+
+    public DbSet<Merchant> Merchants => Set<Merchant>();
+
+    public DbSet<MerchantComplianceDocument> MerchantComplianceDocuments => Set<MerchantComplianceDocument>();
+
+    public DbSet<MerchantCategory> MerchantCategories => Set<MerchantCategory>();
+
+    public DbSet<Product> Products => Set<Product>();
+
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
+    public DbSet<Inventory> Inventories => Set<Inventory>();
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public DbSet<Delivery> Deliveries => Set<Delivery>();
+
+    public DbSet<ProofOfDelivery> ProofOfDeliveries => Set<ProofOfDelivery>();
+
+    public DbSet<Rider> Riders => Set<Rider>();
+
+    public DbSet<RiderDocument> RiderDocuments => Set<RiderDocument>();
+
+    public DbSet<RiderLocation> RiderLocations => Set<RiderLocation>();
+
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+
+    public DbSet<Payment> Payments => Set<Payment>();
+
+    public DbSet<Refund> Refunds => Set<Refund>();
+
+    public DbSet<Promotion> Promotions => Set<Promotion>();
+
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<Village> Villages => Set<Village>();
+
+    public DbSet<Zone> Zones => Set<Zone>();
+
+    public DbSet<CoverageArea> CoverageAreas => Set<CoverageArea>();
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(SwaOlavaDbContext).Assembly);
+    }
+}

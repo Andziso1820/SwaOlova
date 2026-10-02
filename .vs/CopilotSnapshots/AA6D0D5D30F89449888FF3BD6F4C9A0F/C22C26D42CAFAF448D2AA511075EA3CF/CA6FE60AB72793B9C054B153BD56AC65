@@ -1,0 +1,7 @@
+﻿using MediatR;
+using SwaOlova.Application.Common.Abstractions;
+
+namespace SwaOlova.Application.Features.Merchants.Commands.UpdateBusinessHours;
+
+public sealed record UpdateBusinessHoursCommand(Guid MerchantId, UpdateBusinessHoursRequest Request)
+    : CommandBase<Unit>;

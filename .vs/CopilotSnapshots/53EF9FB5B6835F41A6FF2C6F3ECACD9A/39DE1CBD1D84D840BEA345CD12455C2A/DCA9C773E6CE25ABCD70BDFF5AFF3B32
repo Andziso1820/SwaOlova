@@ -1,0 +1,171 @@
+﻿@using SwaOlova.Application.Features.Merchants.Queries.GetMerchantById
+@model GetMerchantByIdResponse
+
+@{
+    ViewData["Title"] = "Merchant Details";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>@ViewData["Title"]</h1>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Business Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Business Name:</strong></p>
+                        <p>@Model.BusinessName</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong></p>
+                        <p><span class="badge bg-@GetStatusColor(Model.Status)">@Model.Status</span></p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Contact Person:</strong></p>
+                        <p>@Model.ContactPerson</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong></p>
+                        <p>@Model.Email</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Phone Number:</strong></p>
+                        <p>@Model.PhoneNumber</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Address:</strong></p>
+                        <p>@Model.Address</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Rating:</strong></p>
+                        <p>
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                @if (i < Math.Floor(Model.Rating ?? 0))
+                                {
+                                    <i class="fa fa-star text-warning"></i>
+                                }
+                                else if (i < Model.Rating && Model.Rating % 1 != 0)
+                                {
+                                    <i class="fa fa-star-half-o text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-star-o text-muted"></i>
+                                }
+                            }
+                            (@Model.Rating?.ToString("F1"))
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Commission Rate:</strong></p>
+                        <p>@Model.CommissionRate?.ToString("P")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Status == "Pending")
+                {
+                    <form method="post" asp-action="Approve" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success btn-block mb-2">
+                            <i class="fa fa-check"></i> Approve Merchant
+                        </button>
+                    </form>
+                }
+                @if (Model.Status != "Suspended" && Model.Status != "Inactive")
+                {
+                    <button type="button" class="btn btn-danger btn-block" data-bs-toggle="modal" data-bs-target="#suspendModal">
+                        <i class="fa fa-pause"></i> Suspend Merchant
+                    </button>
+                }
+                <button type="button" class="btn btn-warning btn-block mt-2">
+                    <i class="fa fa-edit"></i> Edit Details
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="text-muted small">Total Orders</p>
+                    <h5>0</h5>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted small">Active Products</p>
+                    <h5>0</h5>
+                </div>
+                <div>
+                    <p class="text-muted small">Joined Date</p>
+                    <h5>@Model.CreatedDate?.ToString("dd MMM yyyy")</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="suspendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="post" asp-action="Suspend" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Suspend Merchant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="mb-3">
+                    <label class="form-label">Reason for Suspension</label>
+                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-danger">Suspend Merchant</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "warning",
+            "approved" => "success",
+            "active" => "success",
+            "suspended" => "danger",
+            "inactive" => "secondary",
+            _ => "secondary"
+        };
+    }
+}

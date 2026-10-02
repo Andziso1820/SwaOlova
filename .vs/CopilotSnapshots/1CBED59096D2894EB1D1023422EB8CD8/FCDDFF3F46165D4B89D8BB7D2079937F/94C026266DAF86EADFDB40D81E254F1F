@@ -1,0 +1,13 @@
+﻿{
+  "ConnectionStrings": {
+    "SwaOlavaDb": "Server=(localdb)\\mssqllocaldb;Database=SwaOlavaDb;Trusted_Connection=true;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}

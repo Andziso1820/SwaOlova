@@ -1,0 +1,7 @@
+using MediatR;
+using SwaOlova.Application.Common.Abstractions;
+
+namespace SwaOlova.Application.Features.Promotions.Commands.DisablePromotion;
+
+public sealed record DisablePromotionCommand(Guid PromotionId)
+    : CommandBase<Unit>;

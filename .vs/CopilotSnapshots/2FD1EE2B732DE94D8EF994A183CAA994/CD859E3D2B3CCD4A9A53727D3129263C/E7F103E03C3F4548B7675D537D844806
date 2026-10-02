@@ -1,0 +1,10 @@
+﻿using SwaOlova.Application.Common.Abstractions;
+using SwaOlova.Application.Features.Promotions.Dtos;
+
+namespace SwaOlova.Application.Features.Promotions.Queries.GetCoupons;
+
+public sealed record GetCouponsQuery(int PageNumber = 1, int PageSize = 10)
+    : QueryBase<GetCouponsResponse>;
+
+public sealed record GetCouponsResponse(
+    IReadOnlyCollection<CouponDto> Coupons);

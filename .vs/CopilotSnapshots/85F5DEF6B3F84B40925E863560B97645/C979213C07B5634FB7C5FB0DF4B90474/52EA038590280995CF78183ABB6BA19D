@@ -1,0 +1,10 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace SwaOlova.Application.Features.Customers.Commands.RegisterCustomer
+{
+    internal class RegisterCustomerResponse
+    {
+    }
+}

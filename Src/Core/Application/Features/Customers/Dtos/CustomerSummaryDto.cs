@@ -1,0 +1,9 @@
+namespace SwaOlova.Application.Features.Customers.Dtos;
+
+public sealed record CustomerSummaryDto(
+    Guid Id,
+    string CustomerNumber,
+    string FullName,
+    string PhoneNumber,
+    bool IsVerified,
+    bool IsActive);

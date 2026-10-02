@@ -1,0 +1,27 @@
+@model SwaOlova.Portal.Areas.Merchants.Models.MerchantWorkspaceViewModel
+
+<form method="post" asp-action="UploadDocument" asp-controller="Merchants" asp-route-id="@Model.Merchant.Id" data-campaign-modal-form="true">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentName" class="form-label">Document Name</label>
+        <input asp-for="DocumentName" class="form-control" placeholder="e.g., Business Registration, Tax Clearance" />
+        <span asp-validation-for="DocumentName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentFileUrl" class="form-label">Document URL</label>
+        <input asp-for="DocumentFileUrl" class="form-control" placeholder="https://example.com/compliance-document.pdf" />
+        <span asp-validation-for="DocumentFileUrl" class="text-danger"></span>
+        <small class="text-muted d-block mt-1">Upload the file to your storage provider first, then paste the public document URL here.</small>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentExpiryDate" class="form-label">Expiry Date</label>
+        <input asp-for="DocumentExpiryDate" type="date" class="form-control" />
+        <span asp-validation-for="DocumentExpiryDate" class="text-danger"></span>
+        <small class="text-muted d-block mt-1">Optional. Leave blank when the document does not expire.</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm">Add Document</button>
+</form>

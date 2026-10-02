@@ -1,0 +1,64 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    var campaignView = Context.Request.Query["view"].ToString();
+}
+
+<nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+        <div class="nav-header">
+            <img class="app-logo" src="~/images/swa-olova-logo.svg" alt="SWA OLOVA logo" />
+            <span class="app-title">SWA OLOVA</span>
+            <small class="app-subtitle">Deliveries Portal</small>
+        </div>
+
+        <ul class="nav metismenu" id="side-menu" data-menu-root="true">
+            <li class="menu-group @(currentPage.Equals("/Index", StringComparison.OrdinalIgnoreCase) || (currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase)) ? "active" : string.Empty)">
+                <a asp-controller="Home" asp-action="Index">
+                    <i class="fa fa-list-alt menu-icon" aria-hidden="true"></i>
+                    <span class="menu-text">Home</span>
+                </a>
+            </li>
+
+            <li class="menu-group has-submenu @(currentPage.StartsWith("/Templates", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                <a href="#" class="menu-toggle" data-menu-toggle="true" aria-expanded="false" aria-controls="menu-templates">
+                    <i class="fa fa-list-alt menu-icon" aria-hidden="true"></i>
+                    <span class="menu-text">Templates</span>
+                    <i class="fa fa-chevron-down menu-arrow" aria-hidden="true"></i>
+                </a>
+                <ul class="nav nav-second-level" id="menu-templates" data-menu-panel="true">
+                    <li class="@(currentPage.Equals("/Templates/Index", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                        <a asp-page="/Templates/Index">Manage</a>
+                    </li>
+                    <li class="@(currentPage.Equals("/Templates/Create", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                        <a asp-page="/Templates/Create">Add</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="menu-group has-submenu @(currentController.Equals("Campaigns", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                <a href="#" class="menu-toggle" data-menu-toggle="true" aria-expanded="false" aria-controls="menu-campaigns">
+                    <i class="fa fa-columns menu-icon" aria-hidden="true"></i>
+                    <span class="menu-text">Campaigns</span>
+                    <i class="fa fa-chevron-down menu-arrow" aria-hidden="true"></i>
+                </a>
+                <ul class="nav nav-second-level" id="menu-campaigns" data-menu-panel="true">
+                    <li class="@(currentController.Equals("Campaigns", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) && campaignView.Equals("none", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                        <a asp-controller="Campaigns" asp-action="Index" asp-route-view="none">Manage Campaigns</a>
+                    </li>
+                    <li class="@(currentController.Equals("Campaigns", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                        <a asp-controller="Campaigns" asp-action="Index">Campaign Workspace</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="menu-group @(currentPage.StartsWith("/Lookups", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                <a asp-page="/Lookups/Index">
+                    <i class="fa fa-book menu-icon" aria-hidden="true"></i>
+                    <span class="menu-text">Lookups</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>

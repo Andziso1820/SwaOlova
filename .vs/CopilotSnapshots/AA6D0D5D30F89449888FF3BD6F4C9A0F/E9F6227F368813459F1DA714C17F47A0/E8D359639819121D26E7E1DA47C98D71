@@ -1,0 +1,75 @@
+﻿using MediatR;
+using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+
+namespace SwaOlova.Application.Features.Orders.Queries.SearchOrders;
+
+public sealed class SearchOrdersQueryHandler(
+    IOrderRepository orderRepository,
+    ICustomerRepository customerRepository,
+    IMerchantRepository merchantRepository)
+    : IRequestHandler<SearchOrdersQuery, Result<SearchOrdersResponse>>
+{
+    public async Task<Result<SearchOrdersResponse>> Handle(SearchOrdersQuery request, CancellationToken cancellationToken)
+    {
+        var pageNumber = request.Request.PageNumber <= 0 ? 1 : request.Request.PageNumber;
+        var pageSize = request.Request.PageSize <= 0 ? 10 : request.Request.PageSize;
+
+        var orders = await orderRepository.GetByCustomerIdAsync(Guid.Empty, pageNumber, pageSize, cancellationToken);
+        var totalCount = await orderRepository.CountByCustomerIdAsync(Guid.Empty, cancellationToken);
+
+        var searchResults = new List<SearchOrderResult>();
+
+        foreach (var order in orders)
+        {
+            // Apply search filters
+            if (!string.IsNullOrWhiteSpace(request.Request.OrderNumber) && !order.OrderNumber.Contains(request.Request.OrderNumber, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Request.Status) && !order.Status.ToString().Equals(request.Request.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var customer = await customerRepository.GetByIdAsync(order.CustomerId, cancellationToken);
+            var merchant = await merchantRepository.GetByIdAsync(order.MerchantId, cancellationToken);
+
+            var customerName = customer != null ? $"{customer.FirstName} {customer.LastName}".Trim() : string.Empty;
+            var merchantName = merchant?.Name ?? string.Empty;
+
+            // Apply keyword filter (searches across order number, customer name, merchant name)
+            if (!string.IsNullOrWhiteSpace(request.Request.Keyword))
+            {
+                var keyword = request.Request.Keyword.ToLowerInvariant();
+                if (!order.OrderNumber.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+                    !customerName.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+                    !merchantName.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+            }
+
+            searchResults.Add(new SearchOrderResult(
+                order.Id,
+                order.OrderNumber,
+                customerName,
+                merchantName,
+                order.Status.ToString(),
+                order.Total,
+                order.CreatedDate));
+        }
+
+        var totalPages = pageSize <= 0 ? 0 : (int)Math.Ceiling(searchResults.Count / (double)pageSize);
+
+        var response = new SearchOrdersResponse(
+            searchResults.Take(pageSize).ToArray(),
+            pageNumber,
+            pageSize,
+            searchResults.Count,
+            totalPages);
+
+        return Result<SearchOrdersResponse>.Success(response);
+    }
+}

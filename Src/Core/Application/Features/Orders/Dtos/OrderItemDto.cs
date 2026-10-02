@@ -1,0 +1,10 @@
+namespace SwaOlova.Application.Features.Orders.Dtos;
+
+public sealed record OrderItemDto(
+    Guid Id,
+    Guid OrderId,
+    Guid ProductId,
+    int Quantity,
+    decimal UnitPrice,
+    decimal TotalPrice,
+    string? ProductName);

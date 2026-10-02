@@ -1,0 +1,40 @@
+﻿using MediatR;
+using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+using SwaOlova.Domain.Enums;
+
+namespace SwaOlova.Application.Features.Payments.Commands.ProcessWebhook;
+
+public sealed class ProcessWebhookCommandHandler(
+    IPaymentRepository paymentRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<ProcessWebhookCommand, Result>
+{
+    public async Task<Result> Handle(ProcessWebhookCommand request, CancellationToken cancellationToken)
+    {
+        // In a real scenario, you would query by ExternalReference
+        // For now, we'll demonstrate the pattern
+        var allPayments = await paymentRepository.SearchAsync(string.Empty, cancellationToken);
+
+        var payment = allPayments.FirstOrDefault(p => p.ExternalReference == request.Request.ExternalReference);
+        if (payment is null)
+        {
+            return Result.Failure($"Payment with external reference '{request.Request.ExternalReference}' was not found.");
+        }
+
+        var status = request.Request.Status.ToLowerInvariant();
+
+        payment.Status = status switch
+        {
+            "success" => PaymentStatus.Paid,
+            "failed" => PaymentStatus.Failed,
+            "cancelled" => PaymentStatus.Cancelled,
+            _ => payment.Status
+        };
+
+        await paymentRepository.UpdateAsync(payment, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+}

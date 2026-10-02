@@ -1,0 +1,87 @@
+﻿using SwaOlova.Application.Features.Merchants.Dtos;
+using SwaOlova.Domain.Enums;
+
+namespace SwaOlova.Portal.Areas.Merchants.Models;
+
+public class MerchantWorkspaceViewModel
+{
+    public MerchantDto Merchant { get; set; } = default!;
+
+    public string? MerchantActionMessage { get; set; }
+
+    public string? MerchantErrorMessage { get; set; }
+
+    public bool CanApproveMerchant { get; set; }
+
+    public bool CanSuspendMerchant { get; set; }
+
+    public bool CanCloseMerchant { get; set; }
+
+    public bool CanActivateMerchant { get; set; }
+
+    public bool CanEditMerchant { get; set; }
+
+    public bool CanManageDocuments { get; set; }
+
+    public bool CanManageUsers { get; set; }
+
+    public bool CanViewOrders { get; set; }
+
+    public bool CanViewProducts { get; set; }
+
+    public bool CanViewFinancials { get; set; }
+
+    public int ProductsCount { get; set; }
+
+    public int ActiveProducts { get; set; }
+
+    public int OrdersToday { get; set; }
+
+    public int OrdersThisMonth { get; set; }
+
+    public decimal RevenueThisMonth { get; set; }
+
+    public decimal AverageRating { get; set; }
+
+    public int ReviewsCount { get; set; }
+
+    public int MerchantUsers { get; set; }
+
+    public bool HasOutstandingDocuments { get; set; }
+
+    public string DocumentName { get; set; } = string.Empty;
+
+    public string DocumentFileUrl { get; set; } = string.Empty;
+
+    public DateTime? DocumentExpiryDate { get; set; }
+
+    public List<DocumentVm> Documents { get; set; } = [];
+
+    public List<ActivityVm> RecentActivities { get; set; } = [];
+}
+
+public class DocumentVm
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string FileUrl { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public DateTime? ExpiryDate { get; set; }
+
+    public DateTime UploadedAt { get; set; }
+
+    public string StatusBadgeClass => string.Equals(Status, "Expired", StringComparison.OrdinalIgnoreCase)
+        ? "bg-danger"
+        : "bg-success";
+}
+
+public class ActivityVm
+{
+    public DateTime Date { get; set; }
+
+    public string Description { get; set; } = string.Empty;
+}

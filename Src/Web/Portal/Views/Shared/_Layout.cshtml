@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SWA OLOVA Deliveries</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/css/inspinia-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Web.Admin.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="wrapper">
+        <partial name="_SideNavigationMenu" />
+
+        <div id="page-wrapper" class="gray-bg">
+            <div class="row border-bottom">
+                <nav class="navbar navbar-static-top" role="navigation">
+                    <div class="navbar-header">
+                        <span class="navbar-brand">@ViewData["Title"]</span>
+                    </div>
+                    <div class="navbar-right">
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown" style="display: inline-block; margin-right: 20px;">
+                                <button class="btn btn-sm btn-default dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none; padding: 0; cursor: pointer;">
+                                    <i class="fa fa-user-circle" style="font-size: 20px; color: #667eea;"></i>
+                                    <span style="margin-left: 8px; color: #333;">
+                                        Welcome
+                                        <strong>@(User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname")?.Value ?? "User")</strong>
+                                    </span>
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="min-width: 200px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                    <li><a class="dropdown-item" asp-action="Profile" asp-controller="Account" style="padding: 10px 15px; display: block; color: #333; text-decoration: none;">
+                                        <i class="fa fa-user" style="margin-right: 8px; color: #667eea;"></i> My Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" style="padding: 10px 15px; display: block; color: #333; text-decoration: none;">
+                                        <i class="fa fa-cog" style="margin-right: 8px; color: #667eea;"></i> Settings
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" style="padding: 10px 15px; display: block; color: #333; text-decoration: none;">
+                                        <i class="fa fa-bell" style="margin-right: 8px; color: #667eea;"></i> Notifications
+                                    </a></li>
+                                    <li><hr class="dropdown-divider" style="margin: 5px 0;"></li>
+                                    <li>
+                                        <form method="post" asp-action="Logout" asp-controller="Account" style="display: inline;">
+                                            <button type="submit" class="dropdown-item" style="padding: 10px 15px; width: 100%; text-align: left; border: none; background: none; cursor: pointer; color: #dc3545;">
+                                                <i class="fa fa-sign-out" style="margin-right: 8px;"></i> Sign Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-action="Login" asp-controller="Account" class="btn btn-sm btn-primary" style="margin-right: 20px;">
+                                <i class="fa fa-sign-in"></i> Sign In
+                            </a>
+                        }
+                    </div>
+                </nav>
+            </div>
+
+            <div class="wrapper wrapper-content">
+                <main role="main" class="container-fluid p-0">
+                    @RenderBody()
+                </main>
+            </div>
+
+            <div class="modal fade" id="campaignAjaxModal" tabindex="-1" aria-labelledby="campaignAjaxModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" id="campaignAjaxModalDialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="campaignAjaxModalTitle">Campaign</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="campaignAjaxModalBody"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div>
+                    <strong>Copyright</strong> SWA OLOVA Deliveries &copy; @DateTime.UtcNow.Year
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <div id="campaignAjaxLoadingOverlay" class="campaign-loading-overlay" aria-hidden="true">
+        <div class="campaign-loading-content" role="status" aria-live="polite" aria-label="Loading">
+            <div class="hollard-loader" aria-hidden="true"></div>
+            <div class="campaign-loading-text">Loading campaign form...</div>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

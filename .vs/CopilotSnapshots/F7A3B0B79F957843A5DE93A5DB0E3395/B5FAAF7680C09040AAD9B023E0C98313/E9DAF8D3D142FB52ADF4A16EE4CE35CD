@@ -1,0 +1,211 @@
+﻿using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+using SwaOlova.Application.Features.Merchants.Commands.CreateMerchant;
+using SwaOlova.Application.Features.Merchants.Commands.UpdateMerchant;
+using SwaOlova.Application.Features.Merchants.Dtos;
+using SwaOlova.Domain.Enums;
+using SwaOlova.Domain.Merchant;
+using MerchantAddress = SwaOlova.Domain.Merchant.MerchantAddress;
+
+namespace SwaOlova.Application.Features.Merchants.Services;
+
+public sealed class MerchantOrchestrator(
+    IMerchantRepository merchantRepository,
+    IUnitOfWork unitOfWork)
+    : IMerchantOrchestrator
+{
+    public async Task<Result<MerchantDto>> CreateMerchantAsync(
+        CreateMerchantRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var address = new MerchantAddress
+        {
+            Id = Guid.NewGuid(),
+            AddressLine1 = request.AddressLine1.Trim(),
+            Village = request.Village.Trim(),
+            Latitude = request.Latitude,
+            Longitude = request.Longitude
+        };
+
+        var merchant = new Merchant
+        {
+            Id = Guid.NewGuid(),
+            MerchantCode = $"MCH-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
+            Name = request.Name.Trim(),
+            ContactNumber = request.ContactNumber.Trim(),
+            Status = MerchantStatus.PendingApproval,
+            MerchantCategoryId = request.MerchantCategoryId,
+            Address = address
+        };
+
+        await merchantRepository.AddAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var merchantDto = MerchantDtoMapper.ToDto(merchant);
+        return Result<MerchantDto>.Success(merchantDto);
+    }
+
+    public async Task<Result<MerchantDto>> UpdateMerchantAsync(
+        Guid merchantId,
+        UpdateMerchantRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result<MerchantDto>.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        if (merchant.Status == MerchantStatus.Closed)
+        {
+            return Result<MerchantDto>.Failure("Closed merchants cannot be updated.");
+        }
+
+        merchant.Name = request.Name.Trim();
+        merchant.ContactNumber = request.ContactNumber.Trim();
+        merchant.Address.AddressLine1 = request.AddressLine1.Trim();
+        merchant.Address.Village = request.Village.Trim();
+        merchant.Address.Latitude = request.Latitude;
+        merchant.Address.Longitude = request.Longitude;
+
+        await merchantRepository.UpdateAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var merchantDto = MerchantDtoMapper.ToDto(merchant);
+        return Result<MerchantDto>.Success(merchantDto);
+    }
+
+    public async Task<Result> ApproveMerchantAsync(
+        Guid merchantId,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        if (merchant.Status != MerchantStatus.PendingApproval)
+        {
+            return Result.Failure($"Only merchants with status '{MerchantStatus.PendingApproval}' can be approved.");
+        }
+
+        merchant.Status = MerchantStatus.Active;
+
+        await merchantRepository.UpdateAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ActivateMerchantAsync(
+        Guid merchantId,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        if (merchant.Status != MerchantStatus.Suspended)
+        {
+            return Result.Failure("Only suspended merchants can be activated.");
+        }
+
+        merchant.Status = MerchantStatus.Active;
+
+        await merchantRepository.UpdateAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> SuspendMerchantAsync(
+        Guid merchantId,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        if (merchant.Status is MerchantStatus.Closed or MerchantStatus.PendingApproval)
+        {
+            return Result.Failure("Only active merchants can be suspended.");
+        }
+
+        merchant.Status = MerchantStatus.Suspended;
+
+        await merchantRepository.UpdateAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> UpdateBusinessHoursAsync(
+        Guid merchantId,
+        IReadOnlyCollection<(string day, TimeOnly opening, TimeOnly closing, bool isClosed)> hours,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        // Validate hours
+        foreach (var hour in hours)
+        {
+            if (!hour.isClosed && hour.opening >= hour.closing)
+            {
+                return Result.Failure($"Opening time must be before closing time for {hour.day}.");
+            }
+        }
+
+        // Business hours would be persisted here once the domain model supports it
+        // For now, this is a placeholder
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    public async Task<Result<MerchantDto>> GetMerchantAsync(
+        Guid merchantId,
+        CancellationToken cancellationToken = default)
+    {
+        var merchant = await merchantRepository.GetByIdAsync(merchantId, cancellationToken);
+        if (merchant is null)
+        {
+            return Result<MerchantDto>.Failure($"Merchant with ID '{merchantId}' was not found.");
+        }
+
+        var merchantDto = MerchantDtoMapper.ToDto(merchant);
+        return Result<MerchantDto>.Success(merchantDto);
+    }
+
+    public async Task<Result<PagedResult<MerchantDto>>> GetMerchantsPagedAsync(
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var allMerchants = await merchantRepository.GetAllAsync(cancellationToken);
+        var totalCount = allMerchants.Count;
+
+        var skip = (pageNumber - 1) * pageSize;
+        var merchants = allMerchants
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(MerchantDtoMapper.ToDto)
+            .ToArray();
+
+        var pagedResult = PagedResult<MerchantDto>.Create(
+            merchants,
+            totalCount,
+            pageNumber,
+            pageSize);
+
+        return Result<PagedResult<MerchantDto>>.Success(pagedResult);
+    }
+}

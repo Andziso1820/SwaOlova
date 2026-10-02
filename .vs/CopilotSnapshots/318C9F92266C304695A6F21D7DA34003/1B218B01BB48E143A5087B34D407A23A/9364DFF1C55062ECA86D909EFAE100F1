@@ -1,0 +1,148 @@
+﻿@using SwaOlova.Application.Features.Customers.Queries.GetCustomersPaged
+@model GetCustomersPagedResponse
+
+@{
+    ViewData["Title"] = "Customers Management";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>@ViewData["Title"]</h1>
+            <a href="#" class="btn btn-primary"><i class="fa fa-plus"></i> Add Customer</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3">
+        <div class="card stat-card mb-3">
+            <div class="card-body">
+                <p class="text-muted small">Total Customers</p>
+                <h4>@Model?.Items?.Count() ?? 0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card stat-card mb-3">
+            <div class="card-body">
+                <p class="text-muted small">Active Today</p>
+                <h4>0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card stat-card mb-3">
+            <div class="card-body">
+                <p class="text-muted small">New This Week</p>
+                <h4>0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card stat-card mb-3">
+            <div class="card-body">
+                <p class="text-muted small">Avg Lifetime Value</p>
+                <h4>$0.00</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <form class="form-inline" method="get">
+                    <div class="input-group">
+                        <input type="text" name="searchTerm" class="form-control" placeholder="Search customers...">
+                        <button type="submit" class="btn btn-info"><i class="fa fa-search"></i></button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Joined Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model?.Items?.Any() == true)
+                        {
+                            @foreach (var customer in Model.Items)
+                            {
+                                <tr>
+                                    <td><strong>@customer.FirstName @customer.LastName</strong></td>
+                                    <td>@customer.Email</td>
+                                    <td>@customer.PhoneNumber</td>
+                                    <td><span class="badge bg-info">0</span></td>
+                                    <td>$0.00</td>
+                                    <td>@customer.CreatedDate?.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <a href="@Url.Action("Details", new { id = customer.Id })" 
+                                           class="btn btn-sm btn-info" title="View Details">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <p class="text-muted">No customers found.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model?.TotalPages > 1)
+            {
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination mb-0">
+                            @if (Model.PageNumber > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1 })">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber - 1 })">Previous</a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.PageNumber - 2); i <= Math.Min(Model.TotalPages, Model.PageNumber + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i })">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.PageNumber < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber + 1 })">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.TotalPages })">Last</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>

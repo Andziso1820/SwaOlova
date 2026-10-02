@@ -1,0 +1,9 @@
+@model SwaOlova.Portal.Areas.Riders.Models.RiderDetailsViewModel
+
+<form method="post" asp-action="Approve" asp-controller="Riders" asp-route-id="@Model.Rider.Id" data-campaign-modal-form="true">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <p class="mb-0">Are you sure you want to approve <strong>@Model.Rider.FullName</strong>? This rider will be activated and able to accept deliveries.</p>
+
+    <button type="submit" class="btn btn-success btn-sm mt-3">Confirm Approval</button>
+</form>

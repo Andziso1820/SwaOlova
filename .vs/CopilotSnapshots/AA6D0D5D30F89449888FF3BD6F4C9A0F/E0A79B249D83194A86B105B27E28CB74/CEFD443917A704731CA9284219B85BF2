@@ -1,0 +1,17 @@
+﻿namespace SwaOlova.Application.Features.Orders.Queries.SearchOrders;
+
+public sealed record SearchOrderResult(
+    Guid Id,
+    string OrderNumber,
+    string CustomerName,
+    string MerchantName,
+    string Status,
+    decimal Total,
+    DateTime CreatedAt);
+
+public sealed record SearchOrdersResponse(
+    IReadOnlyCollection<SearchOrderResult> Results,
+    int PageNumber,
+    int PageSize,
+    int TotalCount,
+    int TotalPages);

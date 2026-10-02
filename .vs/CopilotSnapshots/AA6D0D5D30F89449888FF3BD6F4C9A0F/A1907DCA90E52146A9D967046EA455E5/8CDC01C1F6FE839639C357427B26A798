@@ -1,0 +1,67 @@
+﻿using SwaOlova.Domain.Enums;
+
+namespace SwaOlova.Application.Features.Orders.Services;
+
+/// <summary>
+/// Orchestrates complex order operations involving multiple repositories and services.
+/// </summary>
+public interface IOrderOrchestrator
+{
+    /// <summary>
+    /// Creates an order and initializes its delivery workflow.
+    /// </summary>
+    Task<(bool Success, string Message, Guid? OrderId)> CreateOrderWithDeliveryAsync(
+        Guid customerId,
+        Guid merchantId,
+        Guid deliveryAddressId,
+        OrderType orderType,
+        decimal deliveryFee,
+        IReadOnlyCollection<(Guid ProductId, int Quantity)> items,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Confirms an order and transitions it to confirmed state.
+    /// </summary>
+    Task<(bool Success, string Message)> ConfirmOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Assigns an order to a rider and creates delivery record.
+    /// </summary>
+    Task<(bool Success, string Message, Guid? DeliveryId)> AssignOrderToRiderAsync(
+        Guid orderId,
+        Guid riderId,
+        decimal distanceKm,
+        decimal estimatedDurationMinutes,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Completes an order and marks delivery as done.
+    /// </summary>
+    Task<(bool Success, string Message)> CompleteOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels an order if it hasn't been collected.
+    /// </summary>
+    Task<(bool Success, string Message)> CancelOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Applies a coupon/promotion to an order if valid and active.
+    /// </summary>
+    Task<(bool Success, string Message, decimal DiscountAmount)> ApplyCouponAsync(
+        Guid orderId,
+        Guid promotionId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets order tracking information with delivery, rider, and status details.
+    /// </summary>
+    Task<(bool Success, string Message, dynamic? TrackingData)> GetOrderTrackingAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+}

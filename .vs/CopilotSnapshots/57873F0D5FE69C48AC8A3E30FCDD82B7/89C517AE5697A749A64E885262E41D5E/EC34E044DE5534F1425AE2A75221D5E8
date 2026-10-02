@@ -1,0 +1,13 @@
+﻿using SwaOlova.Domain.Common;
+
+namespace SwaOlova.Domain.Merchant.Merchant
+{
+    public class MerchantCategory : AuditableEntity<Guid>
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+//Restaurant
+//Pharmacy
+//Shop
+}

@@ -1,0 +1,56 @@
+using SwaOlova.Application.Common.Models;
+using SwaOlova.Application.Features.Products.Commands.CreateProduct;
+using SwaOlova.Application.Features.Products.Commands.UpdateProduct;
+using SwaOlova.Application.Features.Products.Dtos;
+using SwaOlova.Application.Features.Products.Queries.GetProductsByMerchant;
+
+namespace SwaOlova.Application.Features.Products.Services;
+
+public interface IProductOrchestrator
+{
+    Task<Result<ProductDto>> CreateProductAsync(
+        CreateProductRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProductDto>> UpdateProductAsync(
+        Guid productId,
+        UpdateProductRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeleteProductAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> UploadProductImageAsync(
+        Guid productId,
+        string imageUrl,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> UpdateInventoryAsync(
+        Guid productId,
+        int quantityAvailable,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> MarkProductOutOfStockAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProductDto>> GetProductAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PagedResult<ProductDto>>> GetProductsPagedAsync(
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<GetProductsByMerchantResponse>> GetProductsByMerchantAsync(
+        Guid merchantId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<InventoryDto>> GetProductInventoryAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default);
+}

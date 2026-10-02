@@ -1,0 +1,368 @@
+﻿using Microsoft.AspNetCore.Identity;
+using SwaOlova.Domain.Enums;
+using SwaOlova.Domain.Identity;
+using SwaOlova.Infrastructure.Data.Context;
+using SwaOlova.Infrastructure.Data.Identity;
+
+namespace SwaOlova.Infrastructure.Data.Seed;
+
+public sealed class RoleSeeder
+{
+    private readonly RoleManager<ApplicationRole> _roleManager;
+    private readonly SwaOlavaDbContext _context;
+
+    public RoleSeeder(RoleManager<ApplicationRole> roleManager, SwaOlavaDbContext context)
+    {
+        _roleManager = roleManager;
+        _context = context;
+    }
+
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
+    {
+        // Define system roles with descriptions
+        var systemRoles = new Dictionary<string, string>
+        {
+            { "SuperAdmin", "Full system access" },
+            { "Admin", "Administrative access" },
+            { "Dispatcher", "Dispatch management" },
+            { "MerchantOwner", "Full merchant access" },
+            { "MerchantManager", "Merchant management" },
+            { "MerchantOperator", "Merchant operations" },
+            { "Rider", "Rider operations" },
+            { "Customer", "Customer access" },
+            { "SupportAgent", "Support operations" },
+            { "FinanceOfficer", "Finance operations" },
+            { "OperationsManager", "Operations management" },
+            { "ReportingUser", "Reporting access" }
+        };
+
+        foreach (var roleEntry in systemRoles)
+        {
+            if (await _roleManager.RoleExistsAsync(roleEntry.Key))
+            {
+                continue;
+            }
+
+            var role = new ApplicationRole
+            {
+                Name = roleEntry.Key,
+                Description = roleEntry.Value,
+                IsSystemRole = true
+            };
+
+            await _roleManager.CreateAsync(role);
+        }
+
+        // Seed permissions
+        await SeedPermissionsAsync(cancellationToken);
+
+        // Assign permissions to roles
+        await AssignPermissionsToRolesAsync(cancellationToken);
+    }
+
+    private async Task SeedPermissionsAsync(CancellationToken cancellationToken = default)
+    {
+        var permissions = GetAllPermissions();
+
+        foreach (var permission in permissions)
+        {
+            var existingPermission = _context.Permissions
+                .FirstOrDefault(p => p.Code == permission.Code);
+
+            if (existingPermission == null)
+            {
+                _context.Permissions.Add(permission);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task AssignPermissionsToRolesAsync(CancellationToken cancellationToken = default)
+    {
+        var rolePermissionMappings = GetRolePermissionMappings();
+
+        foreach (var mapping in rolePermissionMappings)
+        {
+            foreach (var permissionCode in mapping.Value)
+            {
+                var existing = _context.RolePermissions
+                    .FirstOrDefault(rp => rp.RoleName == mapping.Key && rp.Permission!.Code == permissionCode);
+
+                if (existing != null)
+                {
+                    continue;
+                }
+
+                var permission = _context.Permissions
+                    .FirstOrDefault(p => p.Code == permissionCode);
+
+                if (permission != null)
+                {
+                    _context.RolePermissions.Add(new RolePermission(mapping.Key, permission.Id));
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static List<Permission> GetAllPermissions()
+    {
+        return new List<Permission>
+        {
+            // Customer Management
+            new Permission("View Customers", "CUSTOMER_VIEW", "Customer Management"),
+            new Permission("Create Customer", "CUSTOMER_CREATE", "Customer Management"),
+            new Permission("Edit Customer", "CUSTOMER_EDIT", "Customer Management"),
+            new Permission("Delete Customer", "CUSTOMER_DELETE", "Customer Management"),
+
+            // Merchant Management
+            new Permission("View Merchants", "MERCHANT_VIEW", "Merchant Management"),
+            new Permission("Create Merchant", "MERCHANT_CREATE", "Merchant Management"),
+            new Permission("Edit Merchant", "MERCHANT_EDIT", "Merchant Management"),
+            new Permission("Delete Merchant", "MERCHANT_DELETE", "Merchant Management"),
+            new Permission("Manage Merchant Staff", "MERCHANT_MANAGE_STAFF", "Merchant Management"),
+
+            // Product Management
+            new Permission("View Products", "PRODUCT_VIEW", "Product Management"),
+            new Permission("Create Product", "PRODUCT_CREATE", "Product Management"),
+            new Permission("Edit Product", "PRODUCT_EDIT", "Product Management"),
+            new Permission("Delete Product", "PRODUCT_DELETE", "Product Management"),
+
+            // Inventory Management
+            new Permission("View Inventory", "INVENTORY_VIEW", "Inventory Management"),
+            new Permission("Update Inventory", "INVENTORY_UPDATE", "Inventory Management"),
+
+            // Order Management
+            new Permission("View Orders", "ORDER_VIEW", "Order Management"),
+            new Permission("Create Order", "ORDER_CREATE", "Order Management"),
+            new Permission("Edit Order", "ORDER_EDIT", "Order Management"),
+            new Permission("Cancel Order", "ORDER_CANCEL", "Order Management"),
+            new Permission("Accept Order", "ORDER_ACCEPT", "Order Management"),
+
+            // Dispatch Management
+            new Permission("View Dispatch", "DISPATCH_VIEW", "Dispatch Management"),
+            new Permission("Assign Rider", "DISPATCH_ASSIGN_RIDER", "Dispatch Management"),
+            new Permission("Reassign Rider", "DISPATCH_REASSIGN_RIDER", "Dispatch Management"),
+            new Permission("Escalate Delivery", "DISPATCH_ESCALATE", "Dispatch Management"),
+
+            // Delivery Management
+            new Permission("View Deliveries", "DELIVERY_VIEW", "Delivery Management"),
+            new Permission("Update Delivery Status", "DELIVERY_UPDATE_STATUS", "Delivery Management"),
+            new Permission("Track Delivery", "DELIVERY_TRACK", "Delivery Management"),
+
+            // Rider Management
+            new Permission("View Riders", "RIDER_VIEW", "Rider Management"),
+            new Permission("Manage Riders", "RIDER_MANAGE", "Rider Management"),
+            new Permission("View Rider Earnings", "RIDER_VIEW_EARNINGS", "Rider Management"),
+
+            // Payment Management
+            new Permission("View Payments", "PAYMENT_VIEW", "Payment Management"),
+            new Permission("Process Refund", "PAYMENT_REFUND", "Payment Management"),
+            new Permission("Reconciliation", "PAYMENT_RECONCILE", "Payment Management"),
+
+            // Promotion Management
+            new Permission("View Promotions", "PROMOTION_VIEW", "Promotion Management"),
+            new Permission("Create Promotion", "PROMOTION_CREATE", "Promotion Management"),
+            new Permission("Edit Promotion", "PROMOTION_EDIT", "Promotion Management"),
+            new Permission("Delete Promotion", "PROMOTION_DELETE", "Promotion Management"),
+
+            // Location Management
+            new Permission("View Coverage Areas", "LOCATION_VIEW_COVERAGE", "Location Management"),
+            new Permission("Manage Coverage Areas", "LOCATION_MANAGE_COVERAGE", "Location Management"),
+            new Permission("Manage Villages", "LOCATION_MANAGE_VILLAGES", "Location Management"),
+
+            // Reporting
+            new Permission("View Reports", "REPORT_VIEW", "Reporting"),
+            new Permission("Financial Reports", "REPORT_FINANCIAL", "Reporting"),
+            new Permission("Operational Reports", "REPORT_OPERATIONS", "Reporting"),
+
+            // User Management
+            new Permission("Manage Users", "USER_MANAGE", "Administration"),
+            new Permission("Manage Roles", "ROLE_MANAGE", "Administration"),
+            new Permission("Manage Permissions", "PERMISSION_MANAGE", "Administration"),
+            new Permission("View Login History", "USER_VIEW_LOGIN_HISTORY", "Administration"),
+            new Permission("View Activity Logs", "USER_VIEW_ACTIVITY_LOGS", "Administration"),
+
+            // System Settings
+            new Permission("Manage Settings", "SETTING_MANAGE", "Administration"),
+            new Permission("View System Logs", "SYSTEM_VIEW_LOGS", "Administration"),
+
+            // Customer Permissions
+            new Permission("View Own Orders", "CUSTOMER_VIEW_OWN_ORDERS", "Order Management"),
+            new Permission("Create Own Orders", "CUSTOMER_CREATE_OWN_ORDERS", "Order Management"),
+            new Permission("Track Own Deliveries", "CUSTOMER_TRACK_OWN_DELIVERIES", "Delivery Management"),
+            new Permission("Manage Own Addresses", "CUSTOMER_MANAGE_ADDRESSES", "Customer Management"),
+            new Permission("Submit Feedback", "CUSTOMER_SUBMIT_FEEDBACK", "Customer Management"),
+
+            // Rider Permissions
+            new Permission("View Assigned Deliveries", "RIDER_VIEW_ASSIGNED", "Delivery Management"),
+            new Permission("Accept Delivery", "RIDER_ACCEPT_DELIVERY", "Delivery Management"),
+            new Permission("Reject Delivery", "RIDER_REJECT_DELIVERY", "Delivery Management"),
+            new Permission("Update Location", "RIDER_UPDATE_LOCATION", "Rider Management"),
+            new Permission("Upload Proof of Delivery", "RIDER_UPLOAD_POD", "Delivery Management"),
+            new Permission("Complete Delivery", "RIDER_COMPLETE_DELIVERY", "Delivery Management"),
+
+            // Support Agent Permissions
+            new Permission("Create Complaint Cases", "SUPPORT_CREATE_COMPLAINT", "Administration"),
+            new Permission("Update Complaints", "SUPPORT_UPDATE_COMPLAINT", "Administration"),
+        };
+    }
+
+    private static Dictionary<string, List<string>> GetRolePermissionMappings()
+    {
+        return new Dictionary<string, List<string>>
+        {
+            // SuperAdmin - Everything
+            {
+                "SuperAdmin",
+                new List<string>
+                {
+                    "CUSTOMER_VIEW", "CUSTOMER_CREATE", "CUSTOMER_EDIT", "CUSTOMER_DELETE",
+                    "MERCHANT_VIEW", "MERCHANT_CREATE", "MERCHANT_EDIT", "MERCHANT_DELETE", "MERCHANT_MANAGE_STAFF",
+                    "PRODUCT_VIEW", "PRODUCT_CREATE", "PRODUCT_EDIT", "PRODUCT_DELETE",
+                    "INVENTORY_VIEW", "INVENTORY_UPDATE",
+                    "ORDER_VIEW", "ORDER_CREATE", "ORDER_EDIT", "ORDER_CANCEL", "ORDER_ACCEPT",
+                    "DISPATCH_VIEW", "DISPATCH_ASSIGN_RIDER", "DISPATCH_REASSIGN_RIDER", "DISPATCH_ESCALATE",
+                    "DELIVERY_VIEW", "DELIVERY_UPDATE_STATUS", "DELIVERY_TRACK",
+                    "RIDER_VIEW", "RIDER_MANAGE", "RIDER_VIEW_EARNINGS",
+                    "PAYMENT_VIEW", "PAYMENT_REFUND", "PAYMENT_RECONCILE",
+                    "PROMOTION_VIEW", "PROMOTION_CREATE", "PROMOTION_EDIT", "PROMOTION_DELETE",
+                    "LOCATION_VIEW_COVERAGE", "LOCATION_MANAGE_COVERAGE", "LOCATION_MANAGE_VILLAGES",
+                    "REPORT_VIEW", "REPORT_FINANCIAL", "REPORT_OPERATIONS",
+                    "USER_MANAGE", "ROLE_MANAGE", "PERMISSION_MANAGE", "USER_VIEW_LOGIN_HISTORY", "USER_VIEW_ACTIVITY_LOGS",
+                    "SETTING_MANAGE", "SYSTEM_VIEW_LOGS"
+                }
+            },
+
+            // Admin
+            {
+                "Admin",
+                new List<string>
+                {
+                    "CUSTOMER_VIEW", "CUSTOMER_CREATE", "CUSTOMER_EDIT",
+                    "MERCHANT_VIEW", "MERCHANT_CREATE", "MERCHANT_EDIT",
+                    "PRODUCT_VIEW", "PRODUCT_CREATE", "PRODUCT_EDIT",
+                    "INVENTORY_VIEW", "INVENTORY_UPDATE",
+                    "ORDER_VIEW", "ORDER_EDIT",
+                    "DISPATCH_VIEW", "DISPATCH_ASSIGN_RIDER", "DISPATCH_REASSIGN_RIDER",
+                    "DELIVERY_VIEW", "DELIVERY_UPDATE_STATUS", "DELIVERY_TRACK",
+                    "RIDER_VIEW", "RIDER_MANAGE",
+                    "PAYMENT_VIEW", "PAYMENT_REFUND",
+                    "PROMOTION_VIEW", "PROMOTION_CREATE", "PROMOTION_EDIT",
+                    "LOCATION_VIEW_COVERAGE", "LOCATION_MANAGE_COVERAGE", "LOCATION_MANAGE_VILLAGES",
+                    "REPORT_VIEW", "REPORT_FINANCIAL", "REPORT_OPERATIONS",
+                    "USER_MANAGE", "ROLE_MANAGE", "USER_VIEW_LOGIN_HISTORY", "USER_VIEW_ACTIVITY_LOGS",
+                    "SETTING_MANAGE"
+                }
+            },
+
+            // Dispatcher
+            {
+                "Dispatcher",
+                new List<string>
+                {
+                    "ORDER_VIEW", "DISPATCH_VIEW", "DISPATCH_ASSIGN_RIDER", "DISPATCH_REASSIGN_RIDER",
+                    "DISPATCH_ESCALATE", "DELIVERY_VIEW", "DELIVERY_UPDATE_STATUS", "DELIVERY_TRACK",
+                    "RIDER_VIEW", "RIDER_UPDATE_LOCATION", "REPORT_VIEW"
+                }
+            },
+
+            // MerchantOwner
+            {
+                "MerchantOwner",
+                new List<string>
+                {
+                    "PRODUCT_VIEW", "PRODUCT_CREATE", "PRODUCT_EDIT", "PRODUCT_DELETE",
+                    "INVENTORY_VIEW", "INVENTORY_UPDATE",
+                    "ORDER_VIEW", "ORDER_ACCEPT", "MERCHANT_MANAGE_STAFF",
+                    "REPORT_VIEW", "REPORT_FINANCIAL"
+                }
+            },
+
+            // MerchantManager
+            {
+                "MerchantManager",
+                new List<string>
+                {
+                    "PRODUCT_VIEW", "PRODUCT_CREATE", "PRODUCT_EDIT",
+                    "INVENTORY_VIEW", "INVENTORY_UPDATE",
+                    "ORDER_VIEW", "ORDER_ACCEPT",
+                    "REPORT_VIEW"
+                }
+            },
+
+            // MerchantOperator
+            {
+                "MerchantOperator",
+                new List<string>
+                {
+                    "ORDER_VIEW", "INVENTORY_UPDATE"
+                }
+            },
+
+            // Rider
+            {
+                "Rider",
+                new List<string>
+                {
+                    "RIDER_VIEW_ASSIGNED", "RIDER_ACCEPT_DELIVERY", "RIDER_REJECT_DELIVERY",
+                    "RIDER_UPDATE_LOCATION", "RIDER_UPLOAD_POD", "RIDER_COMPLETE_DELIVERY",
+                    "RIDER_VIEW_EARNINGS", "DELIVERY_TRACK"
+                }
+            },
+
+            // Customer
+            {
+                "Customer",
+                new List<string>
+                {
+                    "CUSTOMER_VIEW_OWN_ORDERS", "CUSTOMER_CREATE_OWN_ORDERS",
+                    "CUSTOMER_TRACK_OWN_DELIVERIES", "CUSTOMER_MANAGE_ADDRESSES",
+                    "CUSTOMER_SUBMIT_FEEDBACK", "PAYMENT_VIEW"
+                }
+            },
+
+            // SupportAgent
+            {
+                "SupportAgent",
+                new List<string>
+                {
+                    "CUSTOMER_VIEW", "ORDER_VIEW", "DELIVERY_VIEW", "DELIVERY_TRACK",
+                    "SUPPORT_CREATE_COMPLAINT", "SUPPORT_UPDATE_COMPLAINT", "RIDER_VIEW"
+                }
+            },
+
+            // FinanceOfficer
+            {
+                "FinanceOfficer",
+                new List<string>
+                {
+                    "PAYMENT_VIEW", "PAYMENT_REFUND", "PAYMENT_RECONCILE",
+                    "REPORT_VIEW", "REPORT_FINANCIAL"
+                }
+            },
+
+            // OperationsManager
+            {
+                "OperationsManager",
+                new List<string>
+                {
+                    "ORDER_VIEW", "DISPATCH_VIEW", "DELIVERY_VIEW", "RIDER_VIEW", "RIDER_MANAGE",
+                    "REPORT_VIEW", "REPORT_OPERATIONS",
+                    "LOCATION_VIEW_COVERAGE", "LOCATION_MANAGE_COVERAGE"
+                }
+            },
+
+            // ReportingUser
+            {
+                "ReportingUser",
+                new List<string>
+                {
+                    "REPORT_VIEW", "REPORT_FINANCIAL", "REPORT_OPERATIONS"
+                }
+            }
+        };
+    }
+}

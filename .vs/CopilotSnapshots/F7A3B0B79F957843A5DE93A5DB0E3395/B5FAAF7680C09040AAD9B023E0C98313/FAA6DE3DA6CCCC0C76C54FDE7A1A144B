@@ -1,0 +1,43 @@
+﻿using MediatR;
+using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+using SwaOlova.Application.Features.Merchants.Dtos;
+using SwaOlova.Domain.Enums;
+using SwaOlova.Domain.Merchant;
+
+namespace SwaOlova.Application.Features.Merchants.Commands.CreateMerchant;
+
+public sealed class CreateMerchantCommandHandler(
+    IMerchantRepository merchantRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<CreateMerchantCommand, Result<CreateMerchantResponse>>
+{
+    public async Task<Result<CreateMerchantResponse>> Handle(CreateMerchantCommand request, CancellationToken cancellationToken)
+    {
+        var address = new MerchantAddress
+        {
+            Id = Guid.NewGuid(),
+            AddressLine1 = request.Request.AddressLine1.Trim(),
+            Village = request.Request.Village.Trim(),
+            Latitude = request.Request.Latitude,
+            Longitude = request.Request.Longitude
+        };
+
+        var merchant = new Merchant
+        {
+            Id = Guid.NewGuid(),
+            MerchantCode = $"MCH-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
+            Name = request.Request.Name.Trim(),
+            ContactNumber = request.Request.ContactNumber.Trim(),
+            Status = MerchantStatus.PendingApproval,
+            MerchantCategoryId = request.Request.MerchantCategoryId,
+            Address = address
+        };
+
+        await merchantRepository.AddAsync(merchant, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var merchantDto = MerchantDtoMapper.ToDto(merchant);
+        return Result<CreateMerchantResponse>.Success(new CreateMerchantResponse(merchantDto));
+    }
+}

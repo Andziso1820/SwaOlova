@@ -1,0 +1,13 @@
+﻿@using SwaOlova.Portal
+@using SwaOlova.Application.Features.Orders.Queries.GetOrdersPaged
+@using SwaOlova.Application.Features.Orders.Queries.GetOrderById
+@using SwaOlova.Application.Features.Merchants.Queries.GetMerchantsPaged
+@using SwaOlova.Application.Features.Merchants.Queries.GetMerchantById
+@using SwaOlova.Application.Features.Customers.Queries.GetCustomersPaged
+@using SwaOlova.Application.Features.Customers.Queries.GetCustomerById
+@using SwaOlova.Application.Features.Riders.Queries.SearchRiders
+@using SwaOlova.Application.Features.Riders.Queries.GetRiderById
+@using SwaOlova.Application.Features.Products.Queries.GetProductsPaged
+@using SwaOlova.Application.Features.Products.Queries.GetProductById
+@using SwaOlova.Application.Features.Payments.Queries.GetPaymentById
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

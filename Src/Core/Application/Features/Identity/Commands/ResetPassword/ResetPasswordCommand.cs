@@ -1,0 +1,6 @@
+using SwaOlova.Application.Common.Abstractions;
+
+namespace SwaOlova.Application.Features.Identity.Commands.ResetPassword;
+
+public sealed record ResetPasswordCommand(ResetPasswordRequest Request)
+    : CommandBase;

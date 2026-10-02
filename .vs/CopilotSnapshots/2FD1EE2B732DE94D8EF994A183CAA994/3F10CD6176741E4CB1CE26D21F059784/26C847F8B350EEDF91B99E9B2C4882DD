@@ -1,0 +1,192 @@
+﻿@using SwaOlova.Application.Features.Orders.Queries.GetOrderById
+@model GetOrderByIdResponse
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>@ViewData["Title"]</h1>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Order Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Order Number:</strong></p>
+                        <p>@Model.OrderNumber</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong></p>
+                        <p><span class="badge bg-@GetStatusColor(Model.Status)">@Model.Status</span></p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Customer:</strong></p>
+                        <p>@Model.CustomerName</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Customer Phone:</strong></p>
+                        <p>@Model.CustomerPhone</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Delivery Address:</strong></p>
+                        <p>@Model.DeliveryAddress</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Delivery Instructions:</strong></p>
+                        <p>@Model.SpecialInstructions</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Created:</strong></p>
+                        <p>@Model.CreatedDate?.ToString("dd MMM yyyy HH:mm")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Updated:</strong></p>
+                        <p>@Model.UpdatedDate?.ToString("dd MMM yyyy HH:mm")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model?.Items?.Any() == true)
+                        {
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitPrice.ToString("C")</td>
+                                    <td>@(item.Quantity * item.UnitPrice).ToString("C")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong>@Model.SubTotal.ToString("C")</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery Fee:</span>
+                    <strong>@Model.DeliveryFee.ToString("C")</strong>
+                </div>
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Discount:</span>
+                        <strong>-@Model.DiscountAmount.ToString("C")</strong>
+                    </div>
+                }
+                <hr />
+                <div class="d-flex justify-content-between">
+                    <h6 class="mb-0">Total:</h6>
+                    <h6 class="mb-0">@Model.TotalAmount.ToString("C")</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Status != "Completed" && Model.Status != "Cancelled")
+                {
+                    <button type="button" class="btn btn-info btn-block mb-2" data-bs-toggle="modal" data-bs-target="#assignModal">
+                        <i class="fa fa-truck"></i> Assign Delivery
+                    </button>
+                    <button type="button" class="btn btn-warning btn-block mb-2">
+                        <i class="fa fa-edit"></i> Edit Order
+                    </button>
+                    <button type="button" class="btn btn-danger btn-block" onclick="if(confirm('Are you sure?')) { /* Cancel action */ }">
+                        <i class="fa fa-times"></i> Cancel Order
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Rider</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Rider</label>
+                    <select class="form-select">
+                        <option selected disabled>Choose a rider...</option>
+                        <option>John Doe (IDL001)</option>
+                        <option>Jane Smith (IDL002)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Assign Rider</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "warning",
+            "confirmed" => "info",
+            "assigned" => "primary",
+            "in_transit" => "primary",
+            "completed" => "success",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+}

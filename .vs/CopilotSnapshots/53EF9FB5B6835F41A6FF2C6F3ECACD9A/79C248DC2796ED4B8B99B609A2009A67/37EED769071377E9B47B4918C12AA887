@@ -1,0 +1,31 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace SwaOlova.Portal.Areas.Deliveries.Controllers
+{
+    [Area("Deliveries")]
+    public class DeliveriesController : BaseController
+    {
+        public DeliveriesController(IMediator mediator) : base(mediator)
+        {
+        }
+
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
+        {
+            // This would use GetDeliveriesPaged query when available
+            return View();
+        }
+
+        public async Task<IActionResult> Details(Guid id)
+        {
+            // This would use GetDeliveryById query when available
+            return View();
+        }
+
+        public async Task<IActionResult> Map()
+        {
+            // Map view for tracking deliveries
+            return View();
+        }
+    }
+}

@@ -1,0 +1,62 @@
+﻿using SwaOlova.Application;
+using SwaOlova.Infrastructure.Data;
+//using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Interfaces.Services;
+using SwaOlova.Infrastructure.Data.UnitOfWork;
+using SwaOlova.Infrastructure.Service.Common;
+using SwaOlova.Infrastructure.Service.Common.Interfaces;
+using SwaOlova.Infrastructure.Service.Files;
+using SwaOlova.Infrastructure.Service.Identity;
+using SwaOlova.Infrastructure.Service.OTP;
+using SwaOlova.Infrastructure.Service.Reporting;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructureDataLayer();
+builder.Services.AddHttpContextAccessor();
+
+
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
+builder.Services.AddScoped<INumberGenerator, NumberGenerator>();
+builder.Services.AddScoped<IDateTimeService, DateTimeService>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapStaticAssets();
+
+app.MapAreaControllerRoute(
+    name: "areas",
+    areaName: "{area}",
+    pattern: "{area}/{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
+
+
+app.Run();

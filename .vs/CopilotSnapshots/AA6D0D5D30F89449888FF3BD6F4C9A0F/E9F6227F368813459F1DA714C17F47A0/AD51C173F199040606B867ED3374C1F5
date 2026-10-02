@@ -1,0 +1,12 @@
+﻿using SwaOlova.Application.Features.Orders.Dtos;
+
+namespace SwaOlova.Application.Features.Orders.Queries.GetOrders;
+
+public sealed record OrderSummaryDto(
+    Guid Id,
+    string OrderNumber,
+    string Status,
+    decimal Total,
+    DateTime CreatedDate);
+
+public sealed record GetOrdersResponse(IReadOnlyCollection<OrderSummaryDto> Orders);
