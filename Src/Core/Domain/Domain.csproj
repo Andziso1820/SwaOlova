@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<RootNamespace>SwaOlova.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Auditing.cs\**" />
+    <Compile Remove="Customers\**" />
+    <Compile Remove="Deliveries\**" />
+    <Compile Remove="Identity\**" />
+    <Compile Remove="Locations\**" />
+    <Compile Remove="Merchants\**" />
+    <Compile Remove="Orders\**" />
+    <Compile Remove="Payments\**" />
+    <Compile Remove="Products\**" />
+    <Compile Remove="Reports\**" />
+    <Compile Remove="Riders\**" />
+    <Compile Remove="Vehicles\**" />
+    <EmbeddedResource Remove="Auditing.cs\**" />
+    <EmbeddedResource Remove="Customers\**" />
+    <EmbeddedResource Remove="Deliveries\**" />
+    <EmbeddedResource Remove="Identity\**" />
+    <EmbeddedResource Remove="Locations\**" />
+    <EmbeddedResource Remove="Merchants\**" />
+    <EmbeddedResource Remove="Orders\**" />
+    <EmbeddedResource Remove="Payments\**" />
+    <EmbeddedResource Remove="Products\**" />
+    <EmbeddedResource Remove="Reports\**" />
+    <EmbeddedResource Remove="Riders\**" />
+    <EmbeddedResource Remove="Vehicles\**" />
+    <None Remove="Auditing.cs\**" />
+    <None Remove="Customers\**" />
+    <None Remove="Deliveries\**" />
+    <None Remove="Identity\**" />
+    <None Remove="Locations\**" />
+    <None Remove="Merchants\**" />
+    <None Remove="Orders\**" />
+    <None Remove="Payments\**" />
+    <None Remove="Products\**" />
+    <None Remove="Reports\**" />
+    <None Remove="Riders\**" />
+    <None Remove="Vehicles\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Identity\CurrentUser.cs" />
+    <Compile Include="Identity\Permission.cs" />
+    <Compile Include="Identity\RolePermission.cs" />
+    <Compile Include="Identity\UserActivityLog.cs" />
+    <Compile Include="Locations\CoverageArea.cs" />
+    <Compile Include="Locations\Village.cs" />
+    <Compile Include="Locations\Zone.cs" />
+  </ItemGroup>
+
+</Project>

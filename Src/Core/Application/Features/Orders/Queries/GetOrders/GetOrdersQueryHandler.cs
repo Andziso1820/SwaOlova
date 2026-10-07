@@ -1,0 +1,26 @@
+using MediatR;
+using SwaOlova.Application.Common.Interfaces.Repositories;
+using SwaOlova.Application.Common.Models;
+
+namespace SwaOlova.Application.Features.Orders.Queries.GetOrders;
+
+public sealed class GetOrdersQueryHandler(IOrderRepository orderRepository)
+    : IRequestHandler<GetOrdersQuery, Result<GetOrdersResponse>>
+{
+    public async Task<Result<GetOrdersResponse>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
+    {
+        var orders = await orderRepository.GetByCustomerIdAsync(request.CustomerId, 1, 1000, cancellationToken);
+
+        var orderSummaries = orders
+            .Select(order => new OrderSummaryDto(
+                order.Id,
+                order.OrderNumber,
+                order.Status.ToString(),
+                order.Total,
+                order.CreatedDate))
+            .OrderByDescending(x => x.CreatedDate)
+            .ToArray();
+
+        return Result<GetOrdersResponse>.Success(new GetOrdersResponse(orderSummaries));
+    }
+}

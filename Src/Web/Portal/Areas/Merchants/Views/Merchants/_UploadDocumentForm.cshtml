@@ -1,0 +1,31 @@
+@using SwaOlova.Domain.Enums
+@model SwaOlova.Portal.Areas.Merchants.Models.UploadViewModel
+
+<form method="post" asp-action="UploadDocument" asp-controller="Merchants" asp-route-id="@Model.MerchantId" enctype="multipart/form-data" data-campaign-modal-form="true">
+    <input asp-for="MerchantId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentType" class="form-label">Document Type</label>
+        <select asp-for="DocumentType" class="form-select" asp-items="Html.GetEnumSelectList<MerchantDocumentType>().Where(x => x.Value != ((int)MerchantDocumentType.None).ToString())">
+            <option value="">-- Select Document Type --</option>
+        </select>
+        <span asp-validation-for="DocumentType" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentFile" class="form-label">Document File</label>
+        <input asp-for="DocumentFile" type="file" class="form-control" />
+        <span asp-validation-for="DocumentFile" class="text-danger"></span>
+        <small class="text-muted d-block mt-1">Select the compliance document to store in the database.</small>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentExpiryDate" class="form-label">Expiry Date</label>
+        <input asp-for="DocumentExpiryDate" type="date" class="form-control" />
+        <span asp-validation-for="DocumentExpiryDate" class="text-danger"></span>
+        <small class="text-muted d-block mt-1">Optional. Leave blank when the document does not expire.</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm">Add Document</button>
+</form>

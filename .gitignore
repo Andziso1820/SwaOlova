@@ -2,5 +2,20 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/CopilotSnapshots/12FD0C32E1F55545A21F07C08BC107F8/845F03BE471C57458B8ADB4F3AD9470D/059F1ADCFF597939AC9CF9945063C925
-/Src/Core/Application/bin/Debug/net10.0/Application.deps.json
+# Visual Studio
+.vs/
+.vscode/
+
+# Build artifacts
+**/bin/
+**/obj/
+
+# User files
+*.user
+*.suo
+
+# Test results
+TestResults/
+
+# Logs
+*.log
