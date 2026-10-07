@@ -1,8 +1,0 @@
-﻿using SwaOlova.Domain.Customer;
-
-namespace SwaOlova.Application.Common.Interfaces.Repositories;
-
-public interface ICustomerRepository : IRepository<Customer>
-{
-    Task<Customer?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default);
-}

@@ -1,6 +1,0 @@
-﻿using SwaOlova.Application.Common.Abstractions;
-
-namespace SwaOlova.Application.Features.Identity.Commands.ChangePassword;
-
-public sealed record ChangePasswordCommand(ChangePasswordRequest Request)
-    : CommandBase<Unit>;

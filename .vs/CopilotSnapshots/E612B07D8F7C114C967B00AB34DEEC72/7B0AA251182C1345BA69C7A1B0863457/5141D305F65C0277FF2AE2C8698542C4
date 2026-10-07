@@ -1,3 +1,0 @@
-﻿namespace SwaOlova.Infrastructure.Service.Common.Interfaces;
-
-internal interface IPlaceHolder;

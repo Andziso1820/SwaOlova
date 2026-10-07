@@ -1,7 +1,0 @@
-﻿using AutoMapper;
-
-namespace SwaOlova.Application.Common.Mapping;
-
-public class MappingProfile : Profile
-{
-}

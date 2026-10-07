@@ -1,7 +1,0 @@
-using MediatR;
-using SwaOlova.Application.Common.Abstractions;
-
-namespace SwaOlova.Application.Features.Merchants.Commands.ApproveMerchant;
-
-public sealed record ApproveMerchantCommand(Guid MerchantId)
-    : CommandBase;

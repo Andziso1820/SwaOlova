@@ -1,7 +1,0 @@
-﻿using MediatR;
-using SwaOlova.Application.Common.Abstractions;
-
-namespace SwaOlova.Application.Features.Identity.Commands.Logout;
-
-public sealed record LogoutCommand(Guid UserId)
-    : CommandBase;
