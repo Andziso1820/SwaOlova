@@ -6,6 +6,8 @@ using SwaOlova.Infrastructure.Data.Repositories.Customers;
 using SwaOlova.Infrastructure.Data.Repositories.Merchants;
 using SwaOlova.Infrastructure.Data.Repositories.Orders;
 using SwaOlova.Infrastructure.Data.Repositories.Products;
+using SwaOlova.Infrastructure.Data.Repositories.Riders;
+using SwaOlova.Infrastructure.Data.Repositories.Deliveries;
 using SwaOlova.Infrastructure.Data.Seed;
 using SwaOlova.Infrastructure.Data.Persistence;
 

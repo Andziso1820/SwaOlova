@@ -1525,6 +1525,10 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1557,6 +1561,10 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("StatusReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DriversLicenseNumber")
@@ -1573,11 +1581,16 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                     b.ToTable("Riders", (string)null);
                 });
 
-            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderDocument", b =>
+            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderActivity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -1587,10 +1600,71 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RiderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RiderId");
+
+                    b.HasIndex("RiderId", "CreatedDate");
+
+                    b.ToTable("RiderActivities", (string)null);
+                });
+
+            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("FileData")
+                        .HasColumnType("varbinary(max)");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
+
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("FileUrl")
                         .IsRequired()
@@ -1606,6 +1680,10 @@ namespace SwaOlova.Infrastructure.Data.Migrations
 
                     b.Property<Guid>("RiderId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StoredFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
 
                     b.HasKey("Id");
 
@@ -1654,6 +1732,8 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                     b.HasIndex("RecordedAt");
 
                     b.HasIndex("RiderId");
+
+                    b.HasIndex("RiderId", "RecordedAt");
 
                     b.ToTable("RiderLocations", (string)null);
                 });
@@ -2079,6 +2159,33 @@ namespace SwaOlova.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderActivity", b =>
+                {
+                    b.HasOne("SwaOlova.Domain.Rider.Rider", null)
+                        .WithMany("Activities")
+                        .HasForeignKey("RiderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderDocument", b =>
+                {
+                    b.HasOne("SwaOlova.Domain.Rider.Rider", null)
+                        .WithMany("Documents")
+                        .HasForeignKey("RiderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SwaOlova.Domain.Rider.RiderLocation", b =>
+                {
+                    b.HasOne("SwaOlova.Domain.Rider.Rider", null)
+                        .WithMany()
+                        .HasForeignKey("RiderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SwaOlova.Domain.Vehicle.Vehicle", b =>
                 {
                     b.HasOne("SwaOlova.Domain.Rider.Rider", null)
@@ -2114,6 +2221,13 @@ namespace SwaOlova.Infrastructure.Data.Migrations
             modelBuilder.Entity("SwaOlova.Domain.Order.Order", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SwaOlova.Domain.Rider.Rider", b =>
+                {
+                    b.Navigation("Activities");
+
+                    b.Navigation("Documents");
                 });
 #pragma warning restore 612, 618
         }

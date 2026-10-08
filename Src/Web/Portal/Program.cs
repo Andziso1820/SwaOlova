@@ -1,3 +1,6 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Options;
 using SwaOlova.Application;
 using SwaOlova.Infrastructure.Data;
 //using SwaOlova.Application.Common.Interfaces.Repositories;
@@ -60,6 +63,7 @@ builder.Services.AddDbContext<SwaOlavaDbContext>(options =>
 
 builder.Services.AddInfrastructureDataLayer();
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<AzureBlobStorageOptions>(builder.Configuration.GetSection(AzureBlobStorageOptions.SectionName));
 
 // Add database initializer
 builder.Services.AddScoped<DatabaseInitializer>();
@@ -102,7 +106,19 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
 builder.Services.AddScoped<INumberGenerator, NumberGenerator>();
 builder.Services.AddScoped<IDateTimeService, DateTimeService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IFileStorageService>(serviceProvider =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<AzureBlobStorageOptions>>().Value;
+
+    if (!string.IsNullOrWhiteSpace(options.ConnectionString))
+    {
+        var containerClient = new BlobContainerClient(options.ConnectionString, options.ContainerName);
+        containerClient.CreateIfNotExists(PublicAccessType.None);
+        return new AzureBlobFileStorageService(containerClient);
+    }
+
+    return new LocalFileStorageService(serviceProvider.GetRequiredService<IHostEnvironment>());
+});
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();

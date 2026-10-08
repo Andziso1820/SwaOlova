@@ -114,15 +114,13 @@
             Id = "riders",
             Text = "Riders",
             Icon = "fa-motorcycle",
-            IsActive = currentController.Equals("Riders", StringComparison.OrdinalIgnoreCase),
+            IsActive = false,
             Items = new[]
             {
-                new { Text = "Manage Riders", Href = Url.Action("Index", "Riders") ?? "#", IsActive = currentController.Equals("Riders", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) },
-                new { Text = "Rider Documents", Href = "#", IsActive = false },
-                new { Text = "Rider Availability", Href = "#", IsActive = false },
-                new { Text = "Rider Tracking", Href = "#", IsActive = false },
-                new { Text = "Rider Earnings", Href = "#", IsActive = false },
-                new { Text = "Rider Performance", Href = "#", IsActive = false }
+                new { Text = "Dashboard", Href = "#", IsActive = false },
+                new { Text = "Add Rider", Href = Url.Action("Create", "Riders", new { area = "Riders" }) ?? "#", IsActive = currentController.Equals("Riders", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Create", StringComparison.OrdinalIgnoreCase) },
+                new { Text = "Manage Riders", Href = Url.Action("Index", "Riders", new { area = "Riders" }) ?? "#", IsActive = currentController.Equals("Riders", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) },
+                new { Text = "Reports", Href = "#", IsActive = false }
             }
         },
         new

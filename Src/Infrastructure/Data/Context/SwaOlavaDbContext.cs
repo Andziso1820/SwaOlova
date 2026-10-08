@@ -57,6 +57,7 @@ public class SwaOlavaDbContext : IdentityDbContext<ApplicationUser, ApplicationR
     public DbSet<RiderDocument> RiderDocuments => Set<RiderDocument>();
 
     public DbSet<RiderLocation> RiderLocations => Set<RiderLocation>();
+    public DbSet<RiderActivity> RiderActivities => Set<RiderActivity>();
 
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 

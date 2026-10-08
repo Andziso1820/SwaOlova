@@ -1,0 +1,28 @@
+@model SwaOlova.Portal.Areas.Riders.Models.EditRiderViewModel
+
+@{
+    Layout = null;
+}
+
+<form method="post"
+      asp-action="Edit"
+      asp-controller="Riders"
+      asp-area="Riders"
+      asp-route-id="@Model.RiderId"
+      data-campaign-modal-form="true">
+    <input asp-for="RiderId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <partial name="_RiderFields" model="Model" />
+
+    <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">
+            Cancel
+        </button>
+
+        <button type="submit" class="btn btn-primary btn-sm">
+            Save Changes
+        </button>
+    </div>
+</form>

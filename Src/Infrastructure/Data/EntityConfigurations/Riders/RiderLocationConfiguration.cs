@@ -20,5 +20,11 @@ public sealed class RiderLocationConfiguration : IEntityTypeConfiguration<RiderL
 
         builder.HasIndex(x => x.RiderId);
         builder.HasIndex(x => x.RecordedAt);
+        builder.HasIndex(x => new { x.RiderId, x.RecordedAt });
+
+        builder.HasOne<Rider>()
+            .WithMany()
+            .HasForeignKey(x => x.RiderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

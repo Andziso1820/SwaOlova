@@ -16,10 +16,9 @@ public sealed class GetRiderLocationQueryHandler(IRiderRepository riderRepositor
             return Result<GetRiderLocationResponse>.Failure($"Rider with ID '{request.RiderId}' was not found.");
         }
 
-        // Note: Would need to retrieve latest location from repository
-        // For now, returning null location
-        RiderLocationDto? locationDto = null;
+        var location = await riderRepository.GetLatestLocationAsync(rider.Id, cancellationToken);
 
-        return Result<GetRiderLocationResponse>.Success(new GetRiderLocationResponse(locationDto));
+        return Result<GetRiderLocationResponse>.Success(
+            new GetRiderLocationResponse(location is null ? null : RiderDtoMapper.ToLocationDto(location)));
     }
 }

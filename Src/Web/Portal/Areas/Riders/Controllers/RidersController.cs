@@ -1,12 +1,19 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SwaOlova.Application.Features.Riders.Commands.AddRiderDocument;
 using SwaOlova.Application.Features.Riders.Commands.ApproveRider;
+using SwaOlova.Application.Features.Riders.Commands.CreateRider;
+using SwaOlova.Application.Features.Riders.Commands.ReactivateRider;
+using SwaOlova.Application.Features.Riders.Commands.SaveRiderVehicle;
 using SwaOlova.Application.Features.Riders.Commands.SetAvailability;
 using SwaOlova.Application.Features.Riders.Commands.SuspendRider;
 using SwaOlova.Application.Features.Riders.Commands.UpdateLocation;
-using SwaOlova.Application.Features.Riders.Commands.UploadDocument;
+using SwaOlova.Application.Features.Riders.Commands.UpdateRider;
+using SwaOlova.Application.Features.Riders.Dtos;
+using SwaOlova.Application.Features.Riders.Queries.GetRiderActivities;
 using SwaOlova.Application.Features.Riders.Queries.GetRiderById;
 using SwaOlova.Application.Features.Riders.Queries.GetRiderDeliveries;
+using SwaOlova.Application.Features.Riders.Queries.GetRiderDocumentById;
 using SwaOlova.Application.Features.Riders.Queries.SearchRiders;
 using SwaOlova.Domain.Enums;
 using SwaOlova.Portal.Areas.Riders.Models;
@@ -15,8 +22,11 @@ using SwaOlova.Portal.Models;
 
 namespace SwaOlova.Portal.Areas.Riders.Controllers
 {
+    [Area("Riders")]
     public class RidersController : BaseController
     {
+        private const long MaxDocumentSize = 10 * 1024 * 1024;
+
         public RidersController(IMediator mediator) : base(mediator)
         {
         }
@@ -24,27 +34,54 @@ namespace SwaOlova.Portal.Areas.Riders.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string view = "all", string? searchTerm = null)
         {
-            var result = await Mediator.Send(new SearchRidersQuery(new SearchRidersRequest(searchTerm, null, 1, int.MaxValue)));
-            var riders = result.Value?.Results ?? [];
+            var normalizedView = NormalizeView(view);
+            var result = await Mediator.Send(new SearchRidersQuery(new SearchRidersRequest(searchTerm, null, 1, 100)));
+                MapViewToStatus(normalizedView);
+
+            var response = result.Value;
+            var counts = response?.StatusCounts ?? new Dictionary<RiderStatus, int>();
 
             var model = new RiderIndexViewModel
             {
-                ActiveView = NormalizeView(view),
+                ActiveView = normalizedView,
                 SearchTerm = searchTerm?.Trim() ?? string.Empty,
-                Heading = BuildHeading(view),
-                Riders = ApplyViewFilter(riders, view)
-                    .OrderBy(rider => rider.FullName)
-                    .ToArray(),
-                DashboardCounts = BuildDashboardCounts(riders)
+                Heading = BuildHeading(normalizedView),
+                Riders = response?.Results ?? [],
+                DashboardCounts = BuildDashboardCounts(counts)
             };
 
             return View(model);
         }
 
         [HttpGet]
+        public IActionResult Create() => View(new CreateRiderViewModel());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateRiderViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var result = await Mediator.Send(new CreateRiderCommand(new CreateRiderRequest(
+                model.FirstName, model.LastName, model.PhoneNumber, model.Email, model.DriversLicenseNumber)));
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to create rider.");
+                return View(model);
+            }
+
+            TempData["RiderActionMessage"] = "Rider created successfully. Capture the vehicle and documents before approval.";
+            return RedirectToAction(nameof(Details), new { area = "Riders", id = result.Value.Rider.Id });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await BuildRiderDetailsViewModelAsync(id);
+            var model = await BuildDetailsAsync(id);
             if (model is null)
             {
                 return NotFound();
@@ -56,281 +93,318 @@ namespace SwaOlova.Portal.Areas.Riders.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ApproveForm(Guid id)
+        public async Task<IActionResult> EditForm(Guid id)
         {
-            var model = await BuildRiderDetailsViewModelAsync(id);
-            return model is null ? NotFound() : PartialView("_ApproveForm", model);
+            var rider = await GetRiderAsync(id);
+            if (rider is null)
+            {
+                return NotFound();
+            }
+
+            return PartialView("_EditForm", new EditRiderViewModel
+            {
+                RiderId = rider.Id,
+                FirstName = rider.FirstName,
+                LastName = rider.LastName,
+                PhoneNumber = rider.PhoneNumber,
+                Email = rider.Email,
+                DriversLicenseNumber = rider.DriversLicenseNumber
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(Guid id)
+        public async Task<IActionResult> Edit(Guid id, EditRiderViewModel model)
         {
-            var result = await Mediator.Send(new ApproveRiderCommand(id));
-            if (!result.Succeeded)
+            model.RiderId = id;
+            if (!ModelState.IsValid)
             {
-                var model = await BuildRiderDetailsViewModelAsync(id);
-                if (model is null)
-                {
-                    return NotFound();
-                }
-
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to approve rider.");
-                return PartialView("_ApproveForm", model);
+                return PartialView("_EditForm", model);
             }
 
-            return Json(new AjaxModalResult
-            {
-                Succeeded = true,
-                Message = "Rider approved successfully.",
-                RedirectUrl = Url.Action(nameof(Details), new { area = "Riders", id })
-            });
+            var result = await Mediator.Send(new UpdateRiderCommand(id, new UpdateRiderRequest(
+                model.FirstName, model.LastName, model.PhoneNumber, model.Email, model.DriversLicenseNumber)));
+
+            return ModalResult(result.Succeeded, result.Error, "_EditForm", model, id, "Rider details updated successfully.");
         }
 
         [HttpGet]
-        public async Task<IActionResult> SuspendForm(Guid id)
-        {
-            var model = await BuildRiderDetailsViewModelAsync(id);
-            return model is null ? NotFound() : PartialView("_SuspendForm", model);
-        }
+        public Task<IActionResult> ApproveForm(Guid id) => StatusFormAsync(id, "_ApproveForm");
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Suspend(Guid id, RiderDetailsViewModel model)
+        public async Task<IActionResult> Approve(Guid id, RiderStatusViewModel model)
         {
-            if (string.IsNullOrWhiteSpace(model.SuspendReason))
+            model.RiderId = id;
+            var result = await Mediator.Send(new ApproveRiderCommand(id, model.Reason));
+            return ModalResult(result.Succeeded, result.Error, "_ApproveForm", model, id, "Rider approved successfully.");
+        }
+
+        [HttpGet]
+        public Task<IActionResult> SuspendForm(Guid id) => StatusFormAsync(id, "_SuspendForm");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Suspend(Guid id, RiderStatusViewModel model)
+        {
+            model.RiderId = id;
+            if (string.IsNullOrWhiteSpace(model.Reason))
             {
-                ModelState.AddModelError(nameof(model.SuspendReason), "Suspension reason is required.");
+                ModelState.AddModelError(nameof(model.Reason), "Suspension reason is required.");
+                return PartialView("_SuspendForm", model);
             }
 
-            if (!ModelState.IsValid)
+            var result = await Mediator.Send(new SuspendRiderCommand(id, model.Reason.Trim()));
+            return ModalResult(result.Succeeded, result.Error, "_SuspendForm", model, id, "Rider suspended successfully.");
+        }
+
+        [HttpGet]
+        public Task<IActionResult> ReactivateForm(Guid id) => StatusFormAsync(id, "_ReactivateForm");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reactivate(Guid id, RiderStatusViewModel model)
+        {
+            model.RiderId = id;
+            if (string.IsNullOrWhiteSpace(model.Reason))
             {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                return currentModel is null ? NotFound() : PartialView("_SuspendForm", currentModel);
+                ModelState.AddModelError(nameof(model.Reason), "Reactivation reason is required.");
+                return PartialView("_ReactivateForm", model);
             }
 
-            var result = await Mediator.Send(new SuspendRiderCommand(id));
-            if (!result.Succeeded)
-            {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                if (currentModel is null)
-                {
-                    return NotFound();
-                }
-
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to suspend rider.");
-                return PartialView("_SuspendForm", currentModel);
-            }
-
-            return Json(new AjaxModalResult
-            {
-                Succeeded = true,
-                Message = "Rider suspended successfully.",
-                RedirectUrl = Url.Action(nameof(Details), new { area = "Riders", id })
-            });
+            var result = await Mediator.Send(new ReactivateRiderCommand(id, model.Reason.Trim()));
+            return ModalResult(result.Succeeded, result.Error, "_ReactivateForm", model, id, "Rider reactivated successfully.");
         }
 
         [HttpGet]
         public async Task<IActionResult> AvailabilityForm(Guid id)
         {
-            var model = await BuildRiderDetailsViewModelAsync(id);
-            return model is null ? NotFound() : PartialView("_AvailabilityForm", model);
+            var rider = await GetRiderAsync(id);
+            return rider is null
+                ? NotFound()
+                : PartialView("_AvailabilityForm", new RiderAvailabilityViewModel
+                {
+                    RiderId = rider.Id,
+                    RiderName = rider.FullName,
+                    IsAvailable = rider.Status == RiderStatus.Available
+                });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetAvailability(Guid id, RiderDetailsViewModel model)
+        public async Task<IActionResult> SetAvailability(Guid id, RiderAvailabilityViewModel model)
         {
+            model.RiderId = id;
             var result = await Mediator.Send(new SetAvailabilityCommand(id, new SetAvailabilityRequest(model.IsAvailable)));
-            if (!result.Succeeded)
-            {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                if (currentModel is null)
-                {
-                    return NotFound();
-                }
-
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to update rider availability.");
-                return PartialView("_AvailabilityForm", currentModel);
-            }
-
-            return Json(new AjaxModalResult
-            {
-                Succeeded = true,
-                Message = $"Rider availability updated to {(model.IsAvailable ? "available" : "offline")}.",
-                RedirectUrl = Url.Action(nameof(Details), new { area = "Riders", id })
-            });
+            return ModalResult(result.Succeeded, result.Error, "_AvailabilityForm", model, id,
+                $"Rider is now {(model.IsAvailable ? "available" : "offline")}.");
         }
 
         [HttpGet]
         public async Task<IActionResult> LocationForm(Guid id)
         {
-            var model = await BuildRiderDetailsViewModelAsync(id);
-            return model is null ? NotFound() : PartialView("_LocationForm", model);
+            var rider = await GetRiderAsync(id);
+            return rider is null
+                ? NotFound()
+                : PartialView("_LocationForm", new RiderLocationViewModel
+                {
+                    RiderId = rider.Id,
+                    Latitude = rider.CurrentLocation?.Latitude,
+                    Longitude = rider.CurrentLocation?.Longitude
+                });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateLocation(Guid id, RiderDetailsViewModel model)
+        public async Task<IActionResult> UpdateLocation(Guid id, RiderLocationViewModel model)
         {
-            if (!model.Latitude.HasValue || model.Latitude < -90 || model.Latitude > 90)
-            {
-                ModelState.AddModelError(nameof(model.Latitude), "Latitude must be between -90 and 90.");
-            }
-
-            if (!model.Longitude.HasValue || model.Longitude < -180 || model.Longitude > 180)
-            {
-                ModelState.AddModelError(nameof(model.Longitude), "Longitude must be between -180 and 180.");
-            }
-
+            model.RiderId = id;
             if (!ModelState.IsValid)
             {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                return currentModel is null ? NotFound() : PartialView("_LocationForm", currentModel);
+                return PartialView("_LocationForm", model);
             }
 
-            var result = await Mediator.Send(new UpdateLocationCommand(id, new UpdateLocationRequest(model.Latitude!.Value, model.Longitude!.Value)));
-            if (!result.Succeeded)
-            {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                if (currentModel is null)
-                {
-                    return NotFound();
-                }
-
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to update rider location.");
-                return PartialView("_LocationForm", currentModel);
-            }
-
-            return Json(new AjaxModalResult
-            {
-                Succeeded = true,
-                Message = "Rider location updated successfully.",
-                RedirectUrl = Url.Action(nameof(Details), new { area = "Riders", id })
-            });
+            var result = await Mediator.Send(new UpdateLocationCommand(id,
+                new UpdateLocationRequest(model.Latitude!.Value, model.Longitude!.Value)));
+            return ModalResult(result.Succeeded, result.Error, "_LocationForm", model, id, "Rider location updated successfully.");
         }
 
         [HttpGet]
-        public async Task<IActionResult> UploadDocumentForm(Guid id)
+        public async Task<IActionResult> VehicleForm(Guid id)
         {
-            var model = await BuildRiderDetailsViewModelAsync(id);
-            return model is null ? NotFound() : PartialView("_UploadDocumentForm", model);
+            var rider = await GetRiderAsync(id);
+            if (rider is null)
+            {
+                return NotFound();
+            }
+
+            return PartialView("_VehicleForm", new RiderVehicleViewModel
+            {
+                RiderId = rider.Id,
+                RegistrationNumber = rider.Vehicle?.RegistrationNumber ?? string.Empty,
+                VehicleType = rider.Vehicle?.VehicleType ?? string.Empty,
+                Make = rider.Vehicle?.Make ?? string.Empty,
+                Model = rider.Vehicle?.Model ?? string.Empty
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadDocument(Guid id, RiderDetailsViewModel model)
+        public async Task<IActionResult> SaveVehicle(Guid id, RiderVehicleViewModel vehicle)
         {
-            if (string.IsNullOrWhiteSpace(model.DocumentFileName))
-            {
-                ModelState.AddModelError(nameof(model.DocumentFileName), "Document name is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(model.DocumentFileUrl))
-            {
-                ModelState.AddModelError(nameof(model.DocumentFileUrl), "Document URL is required.");
-            }
-            else if (!Uri.TryCreate(model.DocumentFileUrl, UriKind.Absolute, out _))
-            {
-                ModelState.AddModelError(nameof(model.DocumentFileUrl), "Document URL must be a valid absolute URL.");
-            }
-
+            vehicle.RiderId = id;
             if (!ModelState.IsValid)
             {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                return currentModel is null ? NotFound() : PartialView("_UploadDocumentForm", currentModel);
+                return PartialView("_VehicleForm", vehicle);
             }
 
-            var result = await Mediator.Send(new UploadDocumentCommand(id, new UploadDocumentRequest(model.DocumentFileName.Trim(), model.DocumentFileUrl.Trim())));
-            if (!result.Succeeded)
-            {
-                var currentModel = await BuildRiderDetailsViewModelAsync(id, model);
-                if (currentModel is null)
-                {
-                    return NotFound();
-                }
+            var result = await Mediator.Send(new SaveRiderVehicleCommand(id,
+                new SaveRiderVehicleRequest(vehicle.RegistrationNumber, vehicle.VehicleType, vehicle.Make, vehicle.Model)));
+            return ModalResult(result.Succeeded, result.Error, "_VehicleForm", vehicle, id, "Rider vehicle saved successfully.");
+        }
 
-                ModelState.AddModelError(string.Empty, result.Error ?? "Unable to add rider document.");
-                return PartialView("_UploadDocumentForm", currentModel);
+        [HttpGet]
+        public IActionResult UploadDocumentForm(Guid id) =>
+            PartialView("_UploadDocumentForm", new RiderDocumentUploadViewModel { RiderId = id });
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(MaxDocumentSize + 1024 * 1024)]
+        public async Task<IActionResult> UploadDocument(Guid id, RiderDocumentUploadViewModel model)
+        {
+            model.RiderId = id;
+
+            if (model.DocumentFile is { Length: > MaxDocumentSize })
+            {
+                ModelState.AddModelError(nameof(model.DocumentFile), "Documents must be smaller than 10 MB.");
+            }
+
+            if (model.ExpiryDate.HasValue && model.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
+            {
+                ModelState.AddModelError(nameof(model.ExpiryDate), "Expiry date cannot be in the past.");
+            }
+
+            if (!ModelState.IsValid || model.DocumentFile is null || model.DocumentType is null)
+            {
+                return PartialView("_UploadDocumentForm", model);
+            }
+
+            byte[] fileData;
+            await using (var stream = new MemoryStream())
+            {
+                await model.DocumentFile.CopyToAsync(stream);
+                fileData = stream.ToArray();
+            }
+
+            var result = await Mediator.Send(new AddRiderDocumentCommand(id, new AddRiderDocumentRequest(
+                model.DocumentType.Value,
+                model.DocumentFile.FileName,
+                string.IsNullOrWhiteSpace(model.DocumentFile.ContentType) ? "application/octet-stream" : model.DocumentFile.ContentType,
+                model.DocumentFile.Length,
+                fileData,
+                model.ExpiryDate)));
+
+            return ModalResult(result.Succeeded, result.Error, "_UploadDocumentForm", model, id, "Rider document added successfully.");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadDocument(Guid id)
+        {
+            var result = await Mediator.Send(new GetRiderDocumentByIdQuery(id));
+            if (!result.Succeeded || result.Value is null)
+            {
+                return NotFound();
+            }
+
+            var document = result.Value;
+            if (document.FileData is { Length: > 0 })
+            {
+                return File(document.FileData, document.ContentType ?? "application/octet-stream",
+                    document.StoredFileName ?? document.FileName);
+            }
+
+            return Uri.TryCreate(document.FileUrl, UriKind.Absolute, out var uri) ? Redirect(uri.ToString()) : NotFound();
+        }
+
+        private async Task<IActionResult> StatusFormAsync(Guid id, string viewName)
+        {
+            var rider = await GetRiderAsync(id);
+            return rider is null
+                ? NotFound()
+                : PartialView(viewName, new RiderStatusViewModel { RiderId = rider.Id, RiderName = rider.FullName });
+        }
+
+        private IActionResult ModalResult(bool succeeded, string? error, string viewName, object model, Guid id, string message)
+        {
+            if (!succeeded)
+            {
+                ModelState.AddModelError(string.Empty, error ?? "The operation could not be completed.");
+                return PartialView(viewName, model);
             }
 
             return Json(new AjaxModalResult
             {
                 Succeeded = true,
-                Message = "Rider document added successfully.",
+                Message = message,
                 RedirectUrl = Url.Action(nameof(Details), new { area = "Riders", id })
             });
         }
 
-        private async Task<RiderDetailsViewModel?> BuildRiderDetailsViewModelAsync(Guid id, RiderDetailsViewModel? postedValues = null)
+        private async Task<RiderDto?> GetRiderAsync(Guid id)
         {
-            var riderResult = await Mediator.Send(new GetRiderByIdQuery(id));
-            if (!riderResult.Succeeded || riderResult.Value is null)
+            var result = await Mediator.Send(new GetRiderByIdQuery(id));
+            return result.Succeeded ? result.Value?.Rider : null;
+        }
+
+        private async Task<RiderDetailsViewModel?> BuildDetailsAsync(Guid id)
+        {
+            var rider = await GetRiderAsync(id);
+            if (rider is null)
             {
                 return null;
             }
 
-            var deliveriesResult = await Mediator.Send(new GetRiderDeliveriesQuery(id, 1, 10));
-            var deliveries = deliveriesResult.Value?.Deliveries ?? [];
-            var rider = riderResult.Value.Rider;
-            var currentLocation = rider.CurrentLocation;
+            var deliveries = await Mediator.Send(new GetRiderDeliveriesQuery(id, 1, 10));
+            var activities = await Mediator.Send(new GetRiderActivitiesQuery(id));
 
             return new RiderDetailsViewModel
             {
                 Rider = rider,
-                Deliveries = deliveries,
-                SuspendReason = postedValues?.SuspendReason ?? string.Empty,
-                IsAvailable = postedValues?.IsAvailable ?? IsAvailableStatus(rider.Status),
-                Latitude = postedValues?.Latitude ?? currentLocation?.Latitude,
-                Longitude = postedValues?.Longitude ?? currentLocation?.Longitude,
-                DocumentFileName = postedValues?.DocumentFileName ?? string.Empty,
-                DocumentFileUrl = postedValues?.DocumentFileUrl ?? string.Empty
+                Deliveries = deliveries.Value?.Deliveries ?? [],
+                TotalDeliveryCount = deliveries.Value?.TotalCount ?? 0,
+                Activities = activities.Value ?? []
             };
         }
 
-        private static IReadOnlyCollection<SearchRiderResult> ApplyViewFilter(IEnumerable<SearchRiderResult> riders, string? view)
+        private static IReadOnlyDictionary<string, int> BuildDashboardCounts(IReadOnlyDictionary<RiderStatus, int> counts)
         {
-            var normalizedView = NormalizeView(view);
-            return riders
-                .Where(rider => normalizedView switch
-                {
-                    "pending" => string.Equals(rider.Status, RiderStatus.PendingApproval.ToString(), StringComparison.OrdinalIgnoreCase),
-                    "available" => string.Equals(rider.Status, RiderStatus.Available.ToString(), StringComparison.OrdinalIgnoreCase),
-                    "busy" => string.Equals(rider.Status, RiderStatus.Busy.ToString(), StringComparison.OrdinalIgnoreCase),
-                    "offline" => string.Equals(rider.Status, RiderStatus.Offline.ToString(), StringComparison.OrdinalIgnoreCase),
-                    "suspended" => string.Equals(rider.Status, RiderStatus.Suspended.ToString(), StringComparison.OrdinalIgnoreCase),
-                    _ => true
-                })
-                .ToArray();
-        }
+            int Count(RiderStatus status) => counts.TryGetValue(status, out var value) ? value : 0;
 
-        private static IReadOnlyDictionary<string, int> BuildDashboardCounts(IEnumerable<SearchRiderResult> riders)
-        {
-            var riderList = riders.ToList();
             return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
-                ["all"] = riderList.Count,
-                ["pending"] = riderList.Count(rider => string.Equals(rider.Status, RiderStatus.PendingApproval.ToString(), StringComparison.OrdinalIgnoreCase)),
-                ["available"] = riderList.Count(rider => string.Equals(rider.Status, RiderStatus.Available.ToString(), StringComparison.OrdinalIgnoreCase)),
-                ["busy"] = riderList.Count(rider => string.Equals(rider.Status, RiderStatus.Busy.ToString(), StringComparison.OrdinalIgnoreCase)),
-                ["offline"] = riderList.Count(rider => string.Equals(rider.Status, RiderStatus.Offline.ToString(), StringComparison.OrdinalIgnoreCase)),
-                ["suspended"] = riderList.Count(rider => string.Equals(rider.Status, RiderStatus.Suspended.ToString(), StringComparison.OrdinalIgnoreCase))
+                ["all"] = counts.Values.Sum(),
+                ["pending"] = Count(RiderStatus.PendingApproval),
+                ["available"] = Count(RiderStatus.Available),
+                ["busy"] = Count(RiderStatus.Busy),
+                ["offline"] = Count(RiderStatus.Offline),
+                ["suspended"] = Count(RiderStatus.Suspended)
             };
         }
 
-        private static bool IsAvailableStatus(RiderStatus status)
+        private static RiderStatus? MapViewToStatus(string view) => view switch
         {
-            return status == RiderStatus.Available || status == RiderStatus.Busy;
-        }
+            "pending" => RiderStatus.PendingApproval,
+            "available" => RiderStatus.Available,
+            "busy" => RiderStatus.Busy,
+            "offline" => RiderStatus.Offline,
+            "suspended" => RiderStatus.Suspended,
+            _ => null
+        };
 
-        private static string NormalizeView(string? view)
-        {
-            return string.IsNullOrWhiteSpace(view)
-                ? "all"
-                : view.Trim().ToLowerInvariant();
-        }
+        private static string NormalizeView(string? view) =>
+            string.IsNullOrWhiteSpace(view) ? "all" : view.Trim().ToLowerInvariant();
 
-        private static string BuildHeading(string? view) => NormalizeView(view) switch
+        private static string BuildHeading(string view) => view switch
         {
             "pending" => "Riders Pending Approval",
             "available" => "Available Riders",

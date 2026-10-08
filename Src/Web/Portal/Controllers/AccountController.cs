@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using SwaOlova.Application.Common.Interfaces.Services;
 using SwaOlova.Infrastructure.Data.Identity;
 using SwaOlova.Portal.Models;
 using System.Security.Claims;
@@ -12,17 +13,29 @@ namespace SwaOlova.Portal.Controllers;
 [AllowAnonymous]
 public class AccountController : Controller
 {
+    private const long MaxProfilePhotoSize = 5 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedProfilePhotoContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp"
+    };
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
+        IFileStorageService fileStorageService,
         ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _fileStorageService = fileStorageService;
         _logger = logger;
     }
 
@@ -215,6 +228,81 @@ public class AccountController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize]
+    [RequestSizeLimit(MaxProfilePhotoSize + 1024 * 1024)]
+    public async Task<IActionResult> UploadProfilePhoto(IFormFile? profilePhoto)
+    {
+        if (profilePhoto is null || profilePhoto.Length == 0)
+        {
+            TempData["ErrorMessage"] = "Please select an image to upload.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (profilePhoto.Length > MaxProfilePhotoSize)
+        {
+            TempData["ErrorMessage"] = "Profile photos must be 5 MB or smaller.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (!IsSupportedProfilePhoto(profilePhoto))
+        {
+            TempData["ErrorMessage"] = "Only JPG, PNG, GIF, and WEBP images are allowed.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var previousProfilePhotoPath = user.ProfilePhotoUrl;
+
+        try
+        {
+            await using var stream = profilePhoto.OpenReadStream();
+            var uploadedPhotoPath = await _fileStorageService.UploadAsync(
+                "profile",
+                profilePhoto.FileName,
+                stream,
+                profilePhoto.ContentType);
+
+            user.ProfilePhotoUrl = uploadedPhotoPath;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                await _fileStorageService.DeleteAsync(uploadedPhotoPath);
+                TempData["ErrorMessage"] = result.Errors.FirstOrDefault()?.Description ?? "Unable to update your profile photo.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            if (!string.IsNullOrWhiteSpace(previousProfilePhotoPath)
+                && !string.Equals(previousProfilePhotoPath, uploadedPhotoPath, StringComparison.OrdinalIgnoreCase))
+            {
+                await _fileStorageService.DeleteAsync(previousProfilePhotoPath);
+            }
+
+            _logger.LogInformation("User {Email} updated profile photo successfully", user.Email);
+            TempData["SuccessMessage"] = "Your profile photo has been updated successfully.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload profile photo for user {Email}", user.Email);
+            TempData["ErrorMessage"] = "Unable to upload your profile photo right now.";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize]
     public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
     {
         if (newPassword != confirmPassword)
@@ -284,5 +372,20 @@ public class AccountController : Controller
         _logger.LogInformation($"User {user.Email} updated profile");
         TempData["SuccessMessage"] = "Your profile has been updated successfully.";
         return RedirectToAction("Profile");
+    }
+
+    private static bool IsSupportedProfilePhoto(IFormFile profilePhoto)
+    {
+        if (AllowedProfilePhotoContentTypes.Contains(profilePhoto.ContentType))
+        {
+            return true;
+        }
+
+        var extension = Path.GetExtension(profilePhoto.FileName);
+        return extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".png", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".gif", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".webp", StringComparison.OrdinalIgnoreCase);
     }
 }

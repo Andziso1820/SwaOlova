@@ -1,9 +1,123 @@
-@model SwaOlova.Portal.Areas.Riders.Models.RiderDetailsViewModel
+@model SwaOlova.Portal.Areas.Riders.Models.RiderStatusViewModel
 
-<form method="post" asp-action="Approve" asp-controller="Riders" asp-route-id="@Model.Rider.Id" data-campaign-modal-form="true">
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+@{
+    Layout = null;
+}
 
-    <p class="mb-0">Are you sure you want to approve <strong>@Model.Rider.FullName</strong>? This rider will be activated and able to accept deliveries.</p>
+<form method="post"
+      asp-action="Approve"
+      asp-controller="Riders"
+      asp-area="Riders"
+      asp-route-id="@Model.RiderId"
+      data-campaign-modal-form="true"
+      id="approveRiderForm">
 
-    <button type="submit" class="btn btn-success btn-sm mt-3">Confirm Approval</button>
+    <partial name="_StatusFormFields" model="Model" />
+
+    <div class="card merchant-guide-card h-100">
+        <div class="card-body">
+            <div class="merchant-guide-header d-flex align-items-center mb-3">
+                <div class="guide-icon-circle bg-success-subtle me-3">
+                    <i class="fa fa-motorcycle fa-lg text-success"></i>
+                </div>
+
+                <div>
+                    <h5 class="mb-1">Rider Approval Guide</h5>
+                    <p class="text-muted mb-0">
+                        Follow these checks before approving this rider for delivery operations.
+                    </p>
+                </div>
+            </div>
+
+            <div class="tip-card tip-success">
+                <div class="tip-icon">
+                    <i class="fa fa-id-card"></i>
+                </div>
+
+                <div>
+                    <strong>Identity & License Verified</strong>
+                    <p class="mb-0">
+                        Confirm <strong>@Model.RiderName</strong> has valid identification and an up-to-date driver's license.
+                    </p>
+                </div>
+            </div>
+
+            <div class="tip-card tip-info">
+                <div class="tip-icon">
+                    <i class="fa fa-map-marker"></i>
+                </div>
+
+                <div>
+                    <strong>Location Readiness</strong>
+                    <p class="mb-0">
+                        Ensure the rider's location details are accurate so dispatching and tracking work correctly.
+                    </p>
+                </div>
+            </div>
+
+            <div class="tip-card tip-warning">
+                <div class="tip-icon">
+                    <i class="fa fa-truck"></i>
+                </div>
+
+                <div>
+                    <strong>Vehicle & Documents Captured</strong>
+                    <p class="mb-0">
+                        Verify that vehicle information and compliance documents have been captured before approval.
+                    </p>
+                </div>
+            </div>
+
+            <div class="tip-card tip-purple">
+                <div class="tip-icon">
+                    <i class="fa fa-toggle-off"></i>
+                </div>
+
+                <div>
+                    <strong>Starts Offline</strong>
+                    <p class="mb-0">
+                        Once approved, the rider will remain <strong>Offline</strong> until availability is enabled for deliveries.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label asp-for="Reason" class="form-label fw-bold">Approval Notes</label>
+                <textarea asp-for="Reason"
+                          class="form-control"
+                          rows="3"
+                          placeholder="Optional notes, such as checks completed or documents verified."></textarea>
+                <span asp-validation-for="Reason" class="text-danger"></span>
+            </div>
+
+            <div class="tip-card tip-success mt-4">
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="confirmRiderApproval"
+                           data-enable-button="#approveRiderButton" />
+
+                    <label class="form-check-label" for="confirmRiderApproval">
+                        I have reviewed the rider information and confirm that this rider is ready to be approved on Swa Olava.
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">
+            Cancel
+        </button>
+
+        <button type="submit"
+                id="approveRiderButton"
+                class="btn btn-success"
+                disabled>
+            <i class="fa fa-check-circle"></i>
+            Approve Rider
+        </button>
+    </div>
 </form>

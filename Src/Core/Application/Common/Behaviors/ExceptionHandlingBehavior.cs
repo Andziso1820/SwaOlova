@@ -30,7 +30,10 @@ public sealed class ExceptionHandlingBehavior<TRequest, TResponse>(ILogger<Excep
         catch (Exception exception)
         {
             logger.LogError(exception, "Unhandled exception for request {RequestName}", typeof(TRequest).Name);
-            return ResultResponseFactory.CreateFailure<TResponse>("An unexpected application error occurred.");
+            var rootCause = exception.GetBaseException();
+            return ResultResponseFactory.CreateFailure<TResponse>(
+                exception,
+                $"An unexpected application error occurred: {rootCause.Message}");
         }
     }
 }

@@ -1,4 +1,4 @@
-@model SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel
+﻿@model SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel
 
 @{
     ViewData["Title"] = "Riders";
@@ -10,7 +10,17 @@
             <h1 class="mb-0">Manage Riders</h1>
             <p class="text-muted mb-0">View rider status, search the fleet, and open a rider workspace in one click.</p>
         </div>
-        <a href="#" class="btn btn-primary disabled" aria-disabled="true">Add Rider</a>
+        <div class="d-flex gap-2">
+            <a asp-action="Create" asp-controller="Riders" asp-area="Riders" class="btn btn-primary">
+                <i class="fa fa-plus"></i>
+                Add Rider
+            </a>
+
+            <a asp-action="Export" class="btn btn-outline-secondary">
+                <i class="fa fa-download"></i>
+                Export
+            </a>
+        </div>
     </div>
 
     <form method="get" class="row g-2 align-items-center mb-3">
@@ -82,7 +92,7 @@
                                     <td>@rider.RiderNumber</td>
                                     <td>@rider.PhoneNumber</td>
                                     <td>@rider.DriversLicense</td>
-                                    <td><span class="badge @SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel.BadgeClass(rider.Status)">@rider.Status</span></td>
+                                    <td><span class="badge @SwaOlova.Portal.Areas.Riders.Models.RiderIndexViewModel.BadgeClass(rider.Status.ToString())">@rider.Status</span></td>
                                     <td>
                                         <a asp-action="Details" asp-route-id="@rider.Id" class="btn btn-sm btn-outline-secondary">Workspace</a>
                                     </td>

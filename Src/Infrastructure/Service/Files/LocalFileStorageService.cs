@@ -1,15 +1,20 @@
+using Microsoft.Extensions.Hosting;
 using SwaOlova.Application.Common.Interfaces.Services;
 
 namespace SwaOlova.Infrastructure.Service.Files;
 
-public sealed class LocalFileStorageService : IFileStorageService
+public sealed class LocalFileStorageService(IHostEnvironment environment) : IFileStorageService
 {
-    private const string UploadRoot = "wwwroot/uploads";
+    private const string UploadRoot = "uploads";
 
-    public async Task<string> UploadAsync(string fileName, Stream content, CancellationToken cancellationToken = default)
+    public Task<string> UploadAsync(string fileName, Stream content, string? contentType = null, CancellationToken cancellationToken = default)
+        => UploadAsync(string.Empty, fileName, content, contentType, cancellationToken);
+
+    public async Task<string> UploadAsync(string folderPath, string fileName, Stream content, string? contentType = null, CancellationToken cancellationToken = default)
     {
+        var normalizedFolderPath = NormalizeFolderPath(folderPath);
         var storedFileName = GetStoredFileName(fileName);
-        var relativePath = Path.Combine(UploadRoot, storedFileName);
+        var relativePath = BuildRelativePath(normalizedFolderPath, storedFileName);
         var fullPath = GetFullPath(relativePath);
 
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
@@ -20,15 +25,15 @@ public sealed class LocalFileStorageService : IFileStorageService
         return NormalizePath(relativePath);
     }
 
-    public async Task<Stream> DownloadAsync(string relativePath, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(string path, CancellationToken cancellationToken = default)
     {
-        var fullPath = GetFullPath(relativePath);
-        return await Task.FromResult<Stream>(File.OpenRead(fullPath));
-    }
+        if (!IsLocalStoragePath(path))
+        {
+            return Task.CompletedTask;
+        }
 
-    public Task DeleteAsync(string relativePath, CancellationToken cancellationToken = default)
-    {
-        var fullPath = GetFullPath(relativePath);
+        var relativePath = path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.Combine(GetWebRootPath(), relativePath);
 
         if (File.Exists(fullPath))
         {
@@ -38,17 +43,51 @@ public sealed class LocalFileStorageService : IFileStorageService
         return Task.CompletedTask;
     }
 
-    public string GetUrl(string relativePath) => NormalizePath(relativePath);
-
     private static string GetStoredFileName(string fileName)
     {
         var safeFileName = Path.GetFileName(fileName);
         return $"{Guid.NewGuid():N}_{safeFileName}";
     }
 
-    private static string GetFullPath(string relativePath)
-        => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativePath));
+    private string GetFullPath(string relativePath)
+        => Path.GetFullPath(Path.Combine(GetWebRootPath(), relativePath));
+
+    private string GetWebRootPath()
+        => Path.Combine(environment.ContentRootPath, "wwwroot");
+
+    private static string BuildRelativePath(string folderPath, string storedFileName)
+    {
+        var segments = new List<string> { UploadRoot };
+
+        if (!string.IsNullOrWhiteSpace(folderPath))
+        {
+            segments.AddRange(folderPath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
+        segments.Add(storedFileName);
+        return Path.Combine([.. segments]);
+    }
+
+    private static string NormalizeFolderPath(string folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return string.Empty;
+        }
+
+        var sanitizedSegments = folderPath
+            .Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(Path.GetFileName)
+            .Where(segment => !string.IsNullOrWhiteSpace(segment));
+
+        return string.Join('/', sanitizedSegments);
+    }
+
+    private static bool IsLocalStoragePath(string path)
+        => !string.IsNullOrWhiteSpace(path)
+           && !Uri.TryCreate(path, UriKind.Absolute, out _)
+           && path.StartsWith("/", StringComparison.Ordinal);
 
     private static string NormalizePath(string path)
-        => path.Replace(Path.DirectorySeparatorChar, '/');
+        => '/' + path.Replace(Path.DirectorySeparatorChar, '/').TrimStart('/');
 }

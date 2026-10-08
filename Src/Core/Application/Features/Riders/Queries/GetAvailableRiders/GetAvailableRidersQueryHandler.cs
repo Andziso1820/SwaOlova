@@ -13,14 +13,10 @@ public sealed class GetAvailableRidersQueryHandler(IRiderRepository riderReposit
         var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
         var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
 
-        // Note: This would require a GetAvailableAsync method on IRiderRepository
-        // For now, we retrieve all and filter in memory, but in production this should be at the database level
-        var allRiders = await riderRepository.GetAllAsync(cancellationToken);
+        var (items, totalCount) = await riderRepository.SearchAsync(
+            null, RiderStatus.Available, pageNumber, pageSize, cancellationToken);
 
-        var availableRiders = allRiders
-            .Where(r => r.Status == RiderStatus.Available)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+        var riders = items
             .Select(r => new RiderSummaryDto(
                 r.Id,
                 r.RiderNumber,
@@ -29,16 +25,9 @@ public sealed class GetAvailableRidersQueryHandler(IRiderRepository riderReposit
                 r.Status.ToString()))
             .ToArray();
 
-        var totalCount = allRiders.Count(r => r.Status == RiderStatus.Available);
-        var totalPages = pageSize <= 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var response = new GetAvailableRidersResponse(
-            availableRiders,
-            pageNumber,
-            pageSize,
-            totalCount,
-            totalPages);
-
-        return Result<GetAvailableRidersResponse>.Success(response);
+        return Result<GetAvailableRidersResponse>.Success(
+            new GetAvailableRidersResponse(riders, pageNumber, pageSize, totalCount, totalPages));
     }
 }

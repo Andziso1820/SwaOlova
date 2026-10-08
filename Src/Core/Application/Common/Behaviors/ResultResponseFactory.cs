@@ -8,6 +8,18 @@ internal static class ResultResponseFactory
     public static TResponse CreateFailure<TResponse>(params string[] errors)
         => CreateFailure<TResponse>(errors.AsEnumerable());
 
+    public static TResponse CreateFailure<TResponse>(Exception exception, params string[] errors)
+    {
+        var response = CreateFailure<TResponse>(errors.AsEnumerable());
+
+        if (response is Result result)
+        {
+            result.WithException(exception);
+        }
+
+        return response;
+    }
+
     public static TResponse CreateFailure<TResponse>(IEnumerable<string> errors)
     {
         var responseType = typeof(TResponse);

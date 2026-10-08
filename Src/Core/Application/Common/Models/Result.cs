@@ -16,6 +16,14 @@ public class Result
 
     public string? Error => Errors.FirstOrDefault();
 
+    public Exception? Exception { get; private set; }
+
+    internal Result WithException(Exception? exception)
+    {
+        Exception = exception;
+        return this;
+    }
+
     public static Result Success() => new(true);
 
     public static Result Failure(params string[] errors) => new(false, errors);

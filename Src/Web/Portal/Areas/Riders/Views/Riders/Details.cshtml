@@ -2,15 +2,19 @@
 
 @{
     ViewData["Title"] = "Rider Workspace";
+    var riderId = Model.Rider.Id;
 }
 
 <div class="campaign-details-page">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h1 class="mb-0">Rider Workspace</h1>
-            <p class="text-muted mb-0">@Model.Rider.FullName · @Model.Rider.RiderNumber</p>
+            <p class="text-muted mb-0">
+                @Model.Rider.FullName · @Model.Rider.RiderNumber
+                <span class="badge @SwaOlova.Portal.Areas.Riders.Models.RiderDetailsViewModel.BadgeClass(Model.Rider.Status) ms-2">@Model.Rider.Status</span>
+            </p>
         </div>
-        <a asp-action="Index" class="btn btn-outline-secondary">Back to riders</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back To Riders</a>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.RiderActionMessage))
@@ -23,172 +27,116 @@
         <div class="alert alert-danger">@Model.RiderErrorMessage</div>
     }
 
+    @if (Model.CanApprove && !Model.HasVehicle)
+    {
+        <div class="alert alert-info">Capture the rider's vehicle before approving this rider.</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Rider.StatusReason))
+    {
+        <div class="alert alert-secondary"><strong>Last status note:</strong> @Model.Rider.StatusReason</div>
+    }
+
     <div class="card mb-3">
         <div class="card-header">Rider Actions</div>
         <div class="card-body d-flex flex-wrap align-items-center gap-2 campaign-action-bar">
             <button type="button"
-                    class="btn btn-outline-success btn-sm js-campaign-modal-link"
-                    data-campaign-modal-url="@Url.Action("ApproveForm", "Riders", new { area = "Riders", id = Model.Rider.Id })"
-                    data-campaign-modal-title="Approve Rider"
-                    data-campaign-modal-size="modal-md"
-                    disabled="@(!Model.CanApprove)">Approve Rider</button>
-
-            <button type="button"
-                    class="btn btn-outline-danger btn-sm js-campaign-modal-link"
-                    data-campaign-modal-url="@Url.Action("SuspendForm", "Riders", new { area = "Riders", id = Model.Rider.Id })"
-                    data-campaign-modal-title="Suspend Rider"
-                    data-campaign-modal-size="modal-md"
-                    disabled="@(!Model.CanSuspend)">Suspend Rider</button>
-
-            <button type="button"
-                    class="btn btn-outline-primary btn-sm js-campaign-modal-link"
-                    data-campaign-modal-url="@Url.Action("AvailabilityForm", "Riders", new { area = "Riders", id = Model.Rider.Id })"
-                    data-campaign-modal-title="Set Availability"
-                    data-campaign-modal-size="modal-md"
-                    disabled="@(!Model.CanChangeAvailability)">Set Availability</button>
-
-            <button type="button"
-                    class="btn btn-outline-info btn-sm js-campaign-modal-link"
-                    data-campaign-modal-url="@Url.Action("LocationForm", "Riders", new { area = "Riders", id = Model.Rider.Id })"
-                    data-campaign-modal-title="Update Location"
-                    data-campaign-modal-size="modal-md"
-                    disabled="@(!Model.CanUpdateLocation)">Update Location</button>
-
-            <button type="button"
-                    class="btn btn-outline-secondary btn-sm js-campaign-modal-link"
-                    data-campaign-modal-url="@Url.Action("UploadDocumentForm", "Riders", new { area = "Riders", id = Model.Rider.Id })"
-                    data-campaign-modal-title="Add Rider Document"
+                    class="btn btn-teal btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("EditForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Edit Rider"
                     data-campaign-modal-size="modal-lg"
-                    disabled="@(!Model.CanUploadDocument)">Add Document</button>
+                    disabled="@(!Model.CanEditRider)">
+                <i class="fa fa-pencil me-1"></i>
+                Edit Rider
+            </button>
+
+            <button type="button"
+                    class="btn btn-success btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("ApproveForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Approve Rider"
+                    data-campaign-modal-size="modal-lg"
+                    disabled="@(!Model.CanApproveRider)">
+                <i class="fa fa-thumbs-up me-1"></i>
+                Approve Rider
+            </button>
+
+            <button type="button"
+                    class="btn btn-primary btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("ReactivateForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Activate Rider"
+                    data-campaign-modal-size="modal-lg"
+                    disabled="@(!Model.CanReactivate)">
+                <i class="fa fa-play-circle me-1"></i>
+                Activate Rider
+            </button>
+
+            <button type="button"
+                    class="btn btn-orange btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("SuspendForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Suspend Rider"
+                    data-campaign-modal-size="modal-lg"
+                    disabled="@(!Model.CanSuspend)">
+                <i class="fa fa-thumbs-down me-1"></i>
+                Suspend Rider
+            </button>
+
+            <button type="button"
+                    class="btn btn-info btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("AvailabilityForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Set Availability"
+                    data-campaign-modal-size="modal-lg"
+                    disabled="@(!Model.CanChangeAvailability)">
+                <i class="fa fa-toggle-on me-1"></i>
+                Set Availability
+            </button>
+
+            <button type="button"
+                    class="btn btn-secondary btn-sm js-campaign-modal-link"
+                    data-campaign-modal-url="@Url.Action("LocationForm", "Riders", new { area = "Riders", id = riderId })"
+                    data-campaign-modal-title="Update Location"
+                    data-campaign-modal-size="modal-lg"
+                    disabled="@(!Model.CanUpdateLocation)">
+                <i class="fa fa-map-marker me-1"></i>
+                Update Location
+            </button>
         </div>
     </div>
 
     <div class="row g-3 mb-3">
-        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.TotalDeliveries</div><div class="metric-title">Total Deliveries</div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.CompletedDeliveries</div><div class="metric-title">Completed</div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.CancelledDeliveries</div><div class="metric-title">Cancelled / Failed</div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.SuccessRate.ToString("0.#")%</div><div class="metric-title">Success Rate</div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.TotalDeliveryCount</div><div class="metric-title">Total Deliveries</div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.CompletedDeliveries</div><div class="metric-title">Completed (recent)</div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.SuccessRate%</div><div class="metric-title">Success Rate (recent)</div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="metric-card"><div class="metric-value">@Model.Rider.Documents.Count</div><div class="metric-title">Documents</div></div></div>
     </div>
 
     <div class="row g-3">
+        <!-- LEFT PANEL -->
         <div class="col-lg-8">
-            <div class="card h-100 mb-3">
+            <div class="card mb-3">
                 <div class="card-header">Rider Details</div>
                 <div class="card-body">
                     <dl class="row mb-0 template-info-list">
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8"><span class="badge @SwaOlova.Portal.Areas.Riders.Models.RiderDetailsViewModel.BadgeClass(Model.Rider.Status.ToString())">@Model.Rider.Status</span></dd>
-
-                        <dt class="col-sm-4">First Name</dt>
-                        <dd class="col-sm-8">@Model.Rider.FirstName</dd>
-
-                        <dt class="col-sm-4">Last Name</dt>
-                        <dd class="col-sm-8">@Model.Rider.LastName</dd>
-
-                        <dt class="col-sm-4">Email</dt>
-                        <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Rider.Email) ? "N/A" : Model.Rider.Email)</dd>
-
-                        <dt class="col-sm-4">Phone Number</dt>
-                        <dd class="col-sm-8">@Model.Rider.PhoneNumber</dd>
-
-                        <dt class="col-sm-4">Driver License</dt>
-                        <dd class="col-sm-8">@Model.Rider.DriversLicenseNumber</dd>
-
-                        <dt class="col-sm-4">Rating</dt>
-                        <dd class="col-sm-8">@(Model.Rider.Rating?.ToString("0.0") ?? "N/A")</dd>
+                        <dt class="col-sm-4">Rider Number</dt><dd class="col-sm-8">@Model.Rider.RiderNumber</dd>
+                        <dt class="col-sm-4">Full Name</dt><dd class="col-sm-8">@Model.Rider.FullName</dd>
+                        <dt class="col-sm-4">Status</dt><dd class="col-sm-8">@Model.Rider.Status</dd>
+                        <dt class="col-sm-4">Phone Number</dt><dd class="col-sm-8">@Model.Rider.PhoneNumber</dd>
+                        <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@(Model.Rider.Email ?? "N/A")</dd>
+                        <dt class="col-sm-4">Driver's License</dt><dd class="col-sm-8">@Model.Rider.DriversLicenseNumber</dd>
+                        <dt class="col-sm-4">Current Location</dt><dd class="col-sm-8">@Model.LocationSummary</dd>
+                        <dt class="col-sm-4">Registered</dt><dd class="col-sm-8">@Model.Rider.CreatedDate.ToString("dd MMM yyyy")</dd>
                     </dl>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header">Vehicle Information</div>
-                <div class="card-body">
-                    <dl class="row mb-0 template-info-list">
-                        <dt class="col-sm-4">Vehicle Type</dt>
-                        <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Rider.VehicleType) ? "N/A" : Model.Rider.VehicleType)</dd>
-
-                        <dt class="col-sm-4">Vehicle Model</dt>
-                        <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Rider.VehicleModel) ? "N/A" : Model.Rider.VehicleModel)</dd>
-
-                        <dt class="col-sm-4">License Plate</dt>
-                        <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Rider.LicensePlate) ? "N/A" : Model.Rider.LicensePlate)</dd>
-
-                        <dt class="col-sm-4">Insurance Expiry</dt>
-                        <dd class="col-sm-8">@(Model.Rider.InsuranceExpiryDate?.ToString("dd MMM yyyy") ?? "N/A")</dd>
-                    </dl>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Rider Documents</span>
-                    <span class="text-muted small">Total: @Model.Rider.Documents.Count</span>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Document Name</th>
-                                    <th>Document URL</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.Rider.Documents.Count == 0)
-                                {
-                                    <tr><td colspan="3" class="text-center text-muted py-4">No rider documents added yet.</td></tr>
-                                }
-                                else
-                                {
-                                    @foreach (var document in Model.Rider.Documents)
-                                    {
-                                        <tr>
-                                            <td>@document.FileName</td>
-                                            <td class="text-break">@document.FileUrl</td>
-                                            <td>
-                                                <a href="@document.FileUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Open</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card mb-3">
-                <div class="card-header">Location Summary</div>
-                <div class="card-body">
-                    <p class="mb-2">@Model.LocationSummary</p>
-                    @if (Model.Rider.CurrentLocation is not null)
-                    {
-                        <div class="small text-muted">
-                            Latitude: @Model.Rider.CurrentLocation.Latitude.ToString("0.000000")<br />
-                            Longitude: @Model.Rider.CurrentLocation.Longitude.ToString("0.000000")
-                        </div>
-                    }
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Recent Deliveries</span>
-                    <span class="text-muted small">Top @Model.Deliveries.Count</span>
+                    <span class="text-muted small">Latest @Model.Deliveries.Count of @Model.TotalDeliveryCount</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Order</th>
-                                    <th>Status</th>
-                                    <th>Distance</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Order</th><th>Status</th><th>Distance</th></tr></thead>
                             <tbody>
                                 @if (Model.Deliveries.Count == 0)
                                 {
@@ -211,6 +159,151 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="col-lg-4">
+            <!-- VEHICLE -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                    <span>Vehicle</span>
+                    @if (!Model.HasVehicle)
+                    {
+                        <button type="button"
+                                class="btn btn-primary btn-sm js-campaign-modal-link"
+                                data-campaign-modal-url="@Url.Action("VehicleForm", "Riders", new { area = "Riders", id = riderId })"
+                                data-campaign-modal-title="Add Vehicle"
+                                data-campaign-modal-size="modal-lg"
+                                disabled="@(!Model.CanManageVehicle)">
+                            <i class="fa fa-plus me-1"></i>
+                            Add Vehicle
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.Rider.Vehicle is null)
+                    {
+                        <p class="text-muted small mb-0">No vehicle captured.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr><th>Vehicle</th><th>Registration</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@Model.Rider.Vehicle.Make @Model.Rider.Vehicle.Model</div>
+                                            <div class="small text-muted">@Model.Rider.Vehicle.VehicleType</div>
+                                        </td>
+                                        <td>@Model.Rider.Vehicle.RegistrationNumber</td>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-link btn-sm px-0 js-campaign-modal-link"
+                                                    data-campaign-modal-url="@Url.Action("VehicleForm", "Riders", new { area = "Riders", id = riderId })"
+                                                    data-campaign-modal-title="Edit Vehicle"
+                                                    data-campaign-modal-size="modal-lg"
+                                                    disabled="@(!Model.CanManageVehicle)">
+                                                <i class="fa fa-pencil me-1"></i>
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- DOCUMENTS -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                    <span>Compliance Documents</span>
+                    <button type="button"
+                            class="btn btn-primary btn-sm js-campaign-modal-link"
+                            data-campaign-modal-url="@Url.Action("UploadDocumentForm", "Riders", new { area = "Riders", id = riderId })"
+                            data-campaign-modal-title="Add Compliance Document"
+                            data-campaign-modal-size="modal-lg"
+                            disabled="@(!Model.CanManageDocuments)">
+                        <i class="fa fa-upload me-1"></i>
+                        Add Document
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasOutstandingDocuments)
+                    {
+                        <div class="alert alert-warning py-2 small">
+                            Review required. One or more compliance documents are missing or expired.
+                        </div>
+                    }
+
+                    @if (!Model.Rider.Documents.Any())
+                    {
+                        <p class="text-muted small mb-0">No documents uploaded.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr><th>Document</th><th>Status</th><th>Expiry</th><th>Actions</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var document in Model.Rider.Documents)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@document.DocumentType</div>
+                                                <div class="small text-muted">Uploaded @document.CreatedDate.ToString("dd MMM yyyy")</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(document.IsExpired ? "bg-danger" : "bg-success")">@(document.IsExpired ? "Expired" : "Active")</span>
+                                            </td>
+                                            <td>@(document.ExpiryDate?.ToString("dd MMM yyyy") ?? "No expiry")</td>
+                                            <td>
+                                                <a asp-action="DownloadDocument" asp-route-id="@document.Id"
+                                                   target="_blank" rel="noopener noreferrer"
+                                                   class="btn btn-link btn-sm px-0">
+                                                    <i class="fa fa-external-link me-1"></i>
+                                                    Open
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ACTIVITY -->
+            <div class="card">
+                <div class="card-header">Recent Activity</div>
+                <div class="card-body">
+                    @if (!Model.Activities.Any())
+                    {
+                        <p class="text-muted small mb-0">No recent activity recorded.</p>
+                    }
+                    else
+                    {
+                        @foreach (var activity in Model.Activities.Take(10))
+                        {
+                            <div class="border-bottom pb-2 mb-2">
+                                <div class="small text-muted">@activity.Date.ToString("dd MMM yyyy HH:mm")</div>
+                                <div class="fw-semibold">@activity.Title</div>
+                                @if (!string.IsNullOrWhiteSpace(activity.Description))
+                                {
+                                    <div class="small text-muted">@activity.Description</div>
+                                }
+                            </div>
+                        }
+                    }
                 </div>
             </div>
         </div>

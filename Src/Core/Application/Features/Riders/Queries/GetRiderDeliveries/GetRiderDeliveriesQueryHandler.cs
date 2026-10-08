@@ -20,22 +20,23 @@ public sealed class GetRiderDeliveriesQueryHandler(
         var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
         var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
 
-        // Note: This would require a GetByRiderIdAsync method on IDeliveryRepository
-        var deliveries = await deliveryRepository.GetByIdAsync(Guid.Empty, cancellationToken);
+        var rows = await deliveryRepository.GetByRiderIdAsync(rider.Id, pageNumber, pageSize, cancellationToken);
+        var totalCount = await deliveryRepository.CountByRiderIdAsync(rider.Id, cancellationToken);
 
-        var deliverySummaries = new List<DeliverySummaryDto>();
-        // In production, this filtering should happen at the database level
+        var deliveries = rows
+            .Select(row => new DeliverySummaryDto(
+                row.Delivery.OrderId,
+                row.OrderNumber,
+                row.Delivery.Status.ToString(),
+                row.Delivery.DistanceKm,
+                row.Delivery.EstimatedDurationMinutes,
+                row.Delivery.PickupTime,
+                row.Delivery.DeliveryTime))
+            .ToArray();
 
-        var totalCount = deliverySummaries.Count;
-        var totalPages = pageSize <= 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var response = new GetRiderDeliveriesResponse(
-            deliverySummaries,
-            pageNumber,
-            pageSize,
-            totalCount,
-            totalPages);
-
-        return Result<GetRiderDeliveriesResponse>.Success(response);
+        return Result<GetRiderDeliveriesResponse>.Success(
+            new GetRiderDeliveriesResponse(deliveries, pageNumber, pageSize, totalCount, totalPages));
     }
 }

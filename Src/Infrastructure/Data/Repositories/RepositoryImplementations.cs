@@ -9,21 +9,7 @@ using SwaOlova.Infrastructure.Data.Context;
 
 namespace SwaOlova.Infrastructure.Data.Repositories;
 
-public sealed class RiderRepository : Repository<Rider>, SwaOlova.Application.Common.Interfaces.Repositories.IRiderRepository
-{
-    public RiderRepository(SwaOlavaDbContext dbContext)
-        : base(dbContext)
-    {
-    }
-}
 
-public sealed class DeliveryRepository : Repository<Delivery>, SwaOlova.Application.Common.Interfaces.Repositories.IDeliveryRepository
-{
-    public DeliveryRepository(SwaOlavaDbContext dbContext)
-        : base(dbContext)
-    {
-    }
-}
 
 public sealed class PaymentRepository : Repository<Payment>, SwaOlova.Application.Common.Interfaces.Repositories.IPaymentRepository
 {

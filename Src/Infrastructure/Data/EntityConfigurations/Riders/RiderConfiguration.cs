@@ -18,6 +18,8 @@ public sealed class RiderConfiguration : IEntityTypeConfiguration<Rider>
         builder.Property(x => x.LastName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
         builder.Property(x => x.DriversLicenseNumber).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Email).HasMaxLength(256);
+        builder.Property(x => x.StatusReason).HasMaxLength(1000);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(50).IsRequired();
 
         builder.HasIndex(x => x.RiderNumber).IsUnique();
